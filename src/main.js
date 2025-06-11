@@ -1,8 +1,11 @@
 const { invoke } = window.__TAURI__.core;
-const { open } = window.__TAURI__.dialog;
+const { open, save } = window.__TAURI__.dialog;
+const { writeTextFile } = window.__TAURI__.fs;
 
 let currentFilePath = null;
 let isInitialized = false;
+let currentMarkdownContent = '';
+let currentTitle = 'Untitled';
 
 // DOM elements
 let openFileBtn;
@@ -10,6 +13,7 @@ let fileInput;
 let welcomeScreen;
 let markdownViewer;
 let markdownContent;
+let exportHtmlBtn;
 
 async function openFile() {
   try {
@@ -48,6 +52,8 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Tables** - Full table rendering with GitHub styling
 - ✅ **Footnotes** - Reference-style footnotes[^1]
 - ✅ **Task Lists** - Interactive checkboxes
+- ✅ **Image Rendering** - Local and remote images with enhanced styling
+- ✅ **HTML Export** - Export current document as standalone HTML
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
@@ -94,10 +100,11 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ Auto-reload file watching
 - [x] ✅ Tables and footnotes
 - [x] ✅ Strikethrough support
-- [ ] 🔄 Image rendering (in progress)
+- [x] ✅ Image rendering with enhanced styling
+- [x] ✅ HTML export functionality
 - [ ] 📋 Table of contents sidebar
 - [ ] 🔍 Find in page (Ctrl+F)
-- [ ] 🖨️ Print to PDF / Export HTML
+- [ ] 🖨️ Print to PDF support
 - [ ] 🌙 Dark mode themes
 
 ## 📊 Table Support
@@ -368,12 +375,41 @@ This markdown viewer supports footnotes[^1] and multiple reference styles[^note]
 
 You can reference the same footnote multiple times[^1] throughout your document.
 
+## 🖼️ Image Rendering
+
+Our enhanced image rendering supports both local and remote images:
+
+### Remote Images
+![Scenic Mountain Landscape](https://picsum.photos/400/200?random=1)
+
+### Different Image Sizes
+- Small image: ![Small landscape](https://picsum.photos/200/150?random=2)
+- Large image: ![Large cityscape](https://picsum.photos/600/300?random=3)
+
+### Image Features
+- **Responsive scaling**: Images automatically fit the container width
+- **Enhanced styling**: Rounded corners and subtle shadows
+- **Local image support**: Reference images relative to your markdown file
+- **Alt text support**: Screen reader friendly with proper alt text
+- **Multiple formats**: Works with PNG, JPG, GIF, WebP, and SVG
+
+## 📤 Export Functionality
+
+The **Export HTML** button (visible when viewing content) allows you to:
+- Generate standalone HTML files with embedded CSS
+- Preserve all formatting, syntax highlighting, and styling
+- Include images and tables in the exported document
+- Create files that work offline without external dependencies
+
+Simply click "Export HTML" in the toolbar and choose where to save your file!
+
 ## 🚀 How to Use All Features
 
 ### File Operations
 1. **Open files**: Drag & drop .md files into the window
 2. **File associations**: Double-click .md files in your file manager
 3. **Auto-reload**: Edit files in your editor and see changes instantly
+4. **Export**: Click "Export HTML" to save as standalone HTML file
 
 ### Testing Syntax Highlighting
 - Create code blocks with \`\`\`language
@@ -384,6 +420,12 @@ You can reference the same footnote multiple times[^1] throughout your document.
 - Use pipe \`|\` characters to create table columns
 - Add \`:---\` for left align, \`:---:\` for center, \`---:\` for right align
 - Tables automatically get GitHub-style CSS formatting
+
+### Working with Images
+- Use \`![alt text](image-url)\` for images
+- Local images: \`![description](./relative/path.png)\`
+- Remote images: \`![description](https://example.com/image.jpg)\`
+- Images automatically scale to fit the content area
 
 ### Advanced Features
 - **Strikethrough**: Use \`~~text~~\` for ~~strikethrough~~
@@ -420,8 +462,15 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Call Tauri command to parse markdown
     const htmlContent = await invoke('parse_markdown', { markdownContent: markdownText });
     
+    // Store current content for export
+    currentMarkdownContent = htmlContent;
+    currentTitle = fileName;
+    
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
+    
+    // Show export button
+    exportHtmlBtn.style.display = 'inline-block';
     
     // Update window title
     document.title = `Markdown Viewer - ${fileName}`;
@@ -453,12 +502,19 @@ async function loadMarkdownFile(filePath) {
     // Call Tauri command to read and parse markdown
     const htmlContent = await invoke('read_markdown_file', { filePath });
     
+    // Store current content for export
+    currentMarkdownContent = htmlContent;
+    currentTitle = filePath.split(/[\\/]/).pop();
+    
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     currentFilePath = filePath;
     
+    // Show export button
+    exportHtmlBtn.style.display = 'inline-block';
+    
     // Update window title
-    document.title = `Markdown Viewer - ${filePath.split(/[\\/]/).pop()}`;
+    document.title = `Markdown Viewer - ${currentTitle}`;
     
     // Start watching the file for changes
     await startWatchingFile(filePath);
@@ -687,6 +743,61 @@ async function handleFileChange(filePath) {
   }
 }
 
+async function exportHtml() {
+  try {
+    console.log('Export function called');
+    console.log('Current content available:', !!currentMarkdownContent);
+    console.log('Current title:', currentTitle);
+    
+    if (!currentMarkdownContent) {
+      alert('No content to export. Please load a markdown file first.');
+      return;
+    }
+
+    // Generate filename based on current title
+    const defaultName = currentTitle.replace(/\.(md|markdown|mdown|mkd)$/i, '') + '.html';
+    console.log('Default filename:', defaultName);
+    
+    console.log('Opening save dialog...');
+    const filePath = await save({
+      title: 'Export HTML',
+      defaultPath: defaultName,
+      filters: [
+        {
+          name: 'HTML',
+          extensions: ['html']
+        }
+      ]
+    });
+
+    console.log('Selected file path:', filePath);
+
+    if (filePath) {
+      console.log('Generating HTML document...');
+      // Generate complete HTML document
+      const htmlDocument = await invoke('export_html', { 
+        content: currentMarkdownContent, 
+        title: currentTitle 
+      });
+      
+      console.log('HTML document generated, length:', htmlDocument.length);
+      
+      // Write the HTML file using Tauri's fs plugin
+      console.log('Writing file...');
+      await writeTextFile(filePath, htmlDocument);
+      
+      console.log('File written successfully');
+      alert(`HTML exported successfully to: ${filePath}`);
+    } else {
+      console.log('No file path selected');
+    }
+  } catch (error) {
+    console.error('Error exporting HTML:', error);
+    console.error('Error details:', error.message, error.stack);
+    alert('Failed to export HTML: ' + error.message);
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   console.log('🚀 DOM Content Loaded');
   console.log('🔍 Checking Tauri availability...');
@@ -702,10 +813,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   welcomeScreen = document.querySelector('#welcome-screen');
   markdownViewer = document.querySelector('#markdown-viewer');
   markdownContent = document.querySelector('#markdown-content');
+  exportHtmlBtn = document.querySelector('#export-html-btn');
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
+  exportHtmlBtn.addEventListener('click', exportHtml);
   
   // Add manual drag and drop debugging
   const app = document.querySelector('.app');

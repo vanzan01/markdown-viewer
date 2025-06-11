@@ -139,7 +139,7 @@
       "id": 4,
       "title": "Implement Image and Table Rendering",
       "description": "Enable rendering of images (local and remote) and tables in markdown files",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],
@@ -153,7 +153,7 @@
           "description": "Modify the existing parser to handle image and table elements within the content.",
           "dependencies": [],
           "details": "Extend pulldown-cmark parser options to correctly identify and process image and table tags, extracting relevant attributes and content.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -163,7 +163,7 @@
             1
           ],
           "details": "Define and apply GitHub-style CSS rules to tables for responsive design, including borders, spacing, and alignment.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -174,7 +174,7 @@
             2
           ],
           "details": "Test and adjust rendering logic to maintain image and table formatting in exported documents.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
