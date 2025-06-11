@@ -33,30 +33,369 @@ async function openFile() {
 
 async function openSampleFile() {
   try {
-    const sampleMarkdown = `# Welcome to Markdown Viewer
+    const sampleMarkdown = `# 📄 Welcome to Markdown Viewer
 
-This is a **sample** markdown document to test our viewer.
+This comprehensive sample demonstrates **all implemented features** of our markdown viewer.
 
-## Features
+## ✨ Implemented Features
 
-- Parse markdown to HTML
-- Clean, readable interface
-- Support for *italic* and **bold** text
-- Code blocks: \`inline code\`
+- ✅ **CommonMark Markdown Rendering** - Full CommonMark specification support
+- ✅ **Syntax Highlighting** - 20+ programming languages with color coding
+- ✅ **File Associations** - Double-click .md files to open
+- ✅ **Drag & Drop Support** - Drop markdown files into the window
+- ✅ **Auto-Reload File Watching** - Live updates when files change
+- ✅ **Strikethrough** - ~~Cross out~~ text support
+- ✅ **Tables** - Full table rendering with GitHub styling
+- ✅ **Footnotes** - Reference-style footnotes[^1]
+- ✅ **Task Lists** - Interactive checkboxes
+- 🔄 *More features in development...*
 
-### Lists
+## 🎨 Text Formatting
 
-1. First item
-2. Second item
-3. Third item
+### Basic Formatting
+- *Italic text* using asterisks or _underscores_
+- **Bold text** using double asterisks or __double underscores__
+- ***Bold and italic*** combined formatting
+- \`inline code\` with backticks
+- ~~Strikethrough text~~ with double tildes
 
-> This is a blockquote to test styling.
+### Links and References
+- [External link](https://github.com) to websites
+- [Internal reference](#syntax-highlighting-examples) to sections
+- <https://direct-url-links.com> for direct URLs
 
+### Blockquotes
+> This is a blockquote demonstrating styled text blocks.
+> 
+> > Nested blockquotes are also supported for multi-level citations.
+
+## 📋 Lists and Organization
+
+### Numbered Lists
+1. First major feature
+2. Second key capability
+3. Third important function
+   1. Sub-item 3.1
+   2. Sub-item 3.2
+4. Fourth main feature
+
+### Bulleted Lists
+- Primary feature
+- Secondary feature
+  - Sub-feature A
+  - Sub-feature B
+    - Deep nested item
+- Tertiary feature
+
+### Task Lists (Interactive)
+- [x] ✅ Basic markdown rendering
+- [x] ✅ Syntax highlighting 
+- [x] ✅ File associations & drag/drop
+- [x] ✅ Auto-reload file watching
+- [x] ✅ Tables and footnotes
+- [x] ✅ Strikethrough support
+- [ ] 🔄 Image rendering (in progress)
+- [ ] 📋 Table of contents sidebar
+- [ ] 🔍 Find in page (Ctrl+F)
+- [ ] 🖨️ Print to PDF / Export HTML
+- [ ] 🌙 Dark mode themes
+
+## 📊 Table Support
+
+Our table rendering follows GitHub markdown styling:
+
+| Feature | Status | Language | Performance |
+|---------|--------|----------|-------------|
+| Syntax Highlighting | ✅ Complete | Rust + syntect | Excellent |
+| Auto-reload | ✅ Complete | Rust + notify | Fast |
+| Drag & Drop | ✅ Complete | JavaScript + Tauri | Instant |
+| File Associations | ✅ Complete | Tauri config | Native |
+| Tables | ✅ Complete | pulldown-cmark | Good |
+
+### Alignment Examples
+| Left Aligned | Center Aligned | Right Aligned |
+|:-------------|:--------------:|--------------:|
+| Left text    | Center text    | Right text    |
+| More left    | More center    | More right    |
+
+## 💻 Syntax Highlighting Examples
+
+Our syntax highlighting supports 20+ programming languages with proper themes:
+
+### JavaScript/TypeScript
 \`\`\`javascript
-console.log("Hello, world!");
+// Modern JavaScript with ES6+ features
+class MarkdownViewer {
+    constructor(container) {
+        this.container = container;
+        this.watchers = new Map();
+    }
+    
+    async loadFile(filePath) {
+        const content = await invoke('read_markdown_file', { filePath });
+        this.render(content);
+        this.watchFile(filePath);
+    }
+    
+    watchFile(filePath) {
+        // Auto-reload implementation
+        console.log(\`Watching: \${filePath}\`);
+    }
+}
+
+// Arrow functions and destructuring
+const viewer = new MarkdownViewer('#content');
+const { loadFile, watchFile } = viewer;
 \`\`\`
 
-That's it for now!`;
+### Python
+\`\`\`python
+# Python with type hints and modern features
+from typing import List, Dict, Optional
+from pathlib import Path
+import asyncio
+
+class DocumentProcessor:
+    def __init__(self, base_path: Path):
+        self.base_path = base_path
+        self.cache: Dict[str, str] = {}
+    
+    async def process_markdown(self, file_path: str) -> Optional[str]:
+        """Process markdown file with syntax highlighting."""
+        try:
+            content = await self.read_file(file_path)
+            return self.highlight_syntax(content)
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            return None
+    
+    def highlight_syntax(self, content: str) -> str:
+        # Syntax highlighting logic
+        return f"<highlighted>{content}</highlighted>"
+
+# Example usage
+processor = DocumentProcessor(Path("./docs"))
+result = asyncio.run(processor.process_markdown("README.md"))
+\`\`\`
+
+### Rust (Our Backend Language)
+\`\`\`rust
+// Rust code demonstrating Tauri backend
+use tauri::{AppHandle, Emitter};
+use notify::{Watcher, RecommendedWatcher, RecursiveMode};
+use std::sync::{Arc, Mutex};
+
+type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
+
+#[tauri::command]
+async fn parse_markdown(content: &str) -> Result<String, String> {
+    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    
+    // Parse markdown with syntax highlighting
+    let parser = pulldown_cmark::Parser::new_ext(content, options);
+    let mut html_output = String::new();
+    pulldown_cmark::html::push_html(&mut html_output, parser);
+    
+    Ok(post_process_syntax_highlighting(&html_output))
+}
+
+#[tauri::command]
+fn start_watching_file(
+    file_path: String,
+    app_handle: AppHandle,
+    watcher_state: tauri::State<WatcherState>,
+) -> Result<(), String> {
+    // File watching implementation with notify crate
+    println!("Starting to watch: {}", file_path);
+    Ok(())
+}
+\`\`\`
+
+### HTML/CSS
+\`\`\`html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Viewer</title>
+    <style>
+        /* GitHub-style markdown CSS */
+        .markdown-body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial;
+            line-height: 1.6;
+            color: #24292e;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .syntax-highlight {
+            background: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        td, th {
+            border: 1px solid #d0d7de;
+            padding: 6px 13px;
+        }
+    </style>
+</head>
+<body class="markdown-body">
+    <div id="content"></div>
+</body>
+</html>
+\`\`\`
+
+### SQL
+\`\`\`sql
+-- Complex SQL query with CTEs and window functions
+WITH monthly_sales AS (
+    SELECT 
+        DATE_TRUNC('month', order_date) as month,
+        customer_id,
+        SUM(amount) as monthly_total,
+        COUNT(*) as order_count
+    FROM orders 
+    WHERE order_date >= '2024-01-01'
+    GROUP BY 1, 2
+),
+customer_rankings AS (
+    SELECT 
+        customer_id,
+        month,
+        monthly_total,
+        ROW_NUMBER() OVER (PARTITION BY month ORDER BY monthly_total DESC) as rank,
+        LAG(monthly_total) OVER (PARTITION BY customer_id ORDER BY month) as prev_month
+    FROM monthly_sales
+)
+SELECT 
+    c.customer_name,
+    cr.month,
+    cr.monthly_total,
+    cr.rank,
+    CASE 
+        WHEN cr.prev_month IS NULL THEN 'New Customer'
+        WHEN cr.monthly_total > cr.prev_month THEN 'Growing'
+        ELSE 'Declining'
+    END as trend
+FROM customer_rankings cr
+JOIN customers c ON cr.customer_id = c.id
+WHERE cr.rank <= 10
+ORDER BY cr.month, cr.rank;
+\`\`\`
+
+### JSON Configuration
+\`\`\`json
+{
+  "name": "markdown-viewer",
+  "version": "0.1.0",
+  "description": "A Tauri-based markdown viewer with syntax highlighting",
+  "dependencies": {
+    "pulldown-cmark": "0.9",
+    "syntect": "5.0",
+    "notify": "6.0",
+    "tauri": "2.0"
+  },
+  "features": {
+    "syntax_highlighting": true,
+    "file_watching": true,
+    "drag_drop": true,
+    "file_associations": true,
+    "tables": true,
+    "footnotes": true,
+    "strikethrough": true
+  },
+  "supported_languages": [
+    "javascript", "typescript", "python", "rust", "html", "css", 
+    "sql", "json", "yaml", "bash", "markdown", "c", "cpp", "java",
+    "go", "php", "ruby", "swift", "kotlin", "scala", "haskell"
+  ]
+}
+\`\`\`
+
+### Shell/Bash
+\`\`\`bash
+#!/bin/bash
+# Build script for Markdown Viewer
+
+set -e  # Exit on any error
+
+echo "🚀 Building Markdown Viewer..."
+
+# Check if Rust is installed
+if ! command -v cargo &> /dev/null; then
+    echo "❌ Rust is not installed. Please install Rust first."
+    exit 1
+fi
+
+# Check if Node.js is installed  
+if ! command -v npm &> /dev/null; then
+    echo "❌ Node.js is not installed. Please install Node.js first."
+    exit 1
+fi
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+npm install
+
+# Build the application
+echo "🔨 Building application..."
+npm run tauri build
+
+echo "✅ Build complete! Check the 'src-tauri/target/release/bundle' directory."
+
+# Optional: Create distribution package
+if [ "$1" = "--package" ]; then
+    echo "📦 Creating distribution package..."
+    mkdir -p dist
+    cp -r src-tauri/target/release/bundle/* dist/
+    echo "✅ Distribution package created in 'dist/' directory."
+fi
+\`\`\`
+
+## 📝 Footnotes and References
+
+This markdown viewer supports footnotes[^1] and multiple reference styles[^note].
+
+You can reference the same footnote multiple times[^1] throughout your document.
+
+## 🚀 How to Use All Features
+
+### File Operations
+1. **Open files**: Drag & drop .md files into the window
+2. **File associations**: Double-click .md files in your file manager
+3. **Auto-reload**: Edit files in your editor and see changes instantly
+
+### Testing Syntax Highlighting
+- Create code blocks with \`\`\`language
+- Supported: js, ts, py, rs, html, css, sql, json, bash, and more
+- The viewer automatically detects and highlights syntax
+
+### Working with Tables
+- Use pipe \`|\` characters to create table columns
+- Add \`:---\` for left align, \`:---:\` for center, \`---:\` for right align
+- Tables automatically get GitHub-style CSS formatting
+
+### Advanced Features
+- **Strikethrough**: Use \`~~text~~\` for ~~strikethrough~~
+- **Task lists**: Use \`- [ ]\` for unchecked, \`- [x]\` for checked
+- **Footnotes**: Use \`[^label]\` for references and \`[^label]: text\` for definitions
+
+---
+
+*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, and beautiful syntax highlighting.*
+
+[^1]: This is the first footnote with detailed explanation.
+[^note]: Another footnote showing multiple reference support.`;
 
     await loadMarkdownContent(sampleMarkdown);
   } catch (error) {
