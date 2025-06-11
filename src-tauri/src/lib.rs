@@ -39,57 +39,58 @@ fn post_process_syntax_highlighting(html: &str) -> String {
     // Initialize syntax highlighting resources
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let theme_set = ThemeSet::load_defaults();
-    let theme = &theme_set.themes["base16-ocean.dark"];
     
-    // Debug: print the HTML to see the actual format
-    eprintln!("Raw HTML output: {}", html);
+    // Use a lighter theme that works better for markdown viewers
+    let theme = theme_set.themes.get("InspiredGitHub")
+        .or_else(|| theme_set.themes.get("Solarized (light)"))
+        .or_else(|| theme_set.themes.get("base16-ocean.light"))
+        .unwrap_or(&theme_set.themes["base16-ocean.dark"]);
     
-    // Try multiple regex patterns that might match pulldown-cmark output
-    let patterns = [
-        r#"<pre><code class="language-([^"]+)">([^<]*)</code></pre>"#,
-        r#"<pre><code class="([^"]+)">([^<]*)</code></pre>"#,
-        r#"<pre><code>([^<]*)</code></pre>"#,
-    ];
+    // Pattern to match fenced code blocks with language (non-greedy match)
+    let re_with_lang = regex::Regex::new(r#"<pre><code class="language-([^"]+)">(.*?)</code></pre>"#).unwrap();
     
-    let mut result = html.to_string();
-    
-    for pattern in &patterns {
-        if let Ok(re) = regex::Regex::new(pattern) {
-            result = re.replace_all(&result, |caps: &regex::Captures| {
-                let (language, code) = if caps.len() == 3 {
-                    // Pattern with language
-                    (&caps[1], &caps[2])
-                } else {
-                    // Pattern without language
-                    ("", &caps[1])
-                };
-                
-                let decoded_code = html_escape::decode_html_entities(code).to_string();
-                
-                if !language.is_empty() {
-                    if let Some(syntax) = syntax_set.find_syntax_by_token(language) {
-                        match highlighted_html_for_string(&decoded_code, &syntax_set, syntax, theme) {
-                            Ok(highlighted) => {
-                                eprintln!("Successfully highlighted {} code", language);
-                                highlighted
-                            },
-                            Err(e) => {
-                                eprintln!("Failed to highlight {} code: {}", language, e);
-                                format!("<pre><code class=\"language-{}\">{}</code></pre>", language, html_escape::encode_text(&decoded_code))
-                            }
-                        }
-                    } else {
-                        eprintln!("No syntax found for language: {}", language);
-                        format!("<pre><code class=\"language-{}\">{}</code></pre>", language, html_escape::encode_text(&decoded_code))
+    // Process code blocks with language specification
+    let result = re_with_lang.replace_all(html, |caps: &regex::Captures| {
+        let language = &caps[1];
+        let code = html_escape::decode_html_entities(&caps[2]).to_string();
+        
+        // Try multiple language variations to improve matching
+        let language_variants = [
+            language,
+            &language.to_lowercase(),
+            match language.to_lowercase().as_str() {
+                "js" => "javascript",
+                "ts" => "typescript", 
+                "py" => "python",
+                "rb" => "ruby",
+                "sh" => "bash",
+                "yml" => "yaml",
+                "md" => "markdown",
+                _ => language
+            }
+        ];
+        
+        for lang_variant in &language_variants {
+            if let Some(syntax) = syntax_set.find_syntax_by_token(lang_variant) {
+                match highlighted_html_for_string(&code, &syntax_set, syntax, theme) {
+                    Ok(highlighted) => {
+                        return highlighted;
+                    },
+                    Err(_) => {
+                        // Continue trying other variants
                     }
-                } else {
-                    format!("<pre><code>{}</code></pre>", html_escape::encode_text(&decoded_code))
                 }
-            }).to_string();
+            }
         }
-    }
+        
+        // No syntax highlighting available for this language
+        
+        // Fallback to original format with proper escaping
+        format!("<pre><code class=\"language-{}\">{}</code></pre>", 
+               language, html_escape::encode_text(&code))
+    });
     
-    result
+    result.to_string()
 }
 
 #[tauri::command]
