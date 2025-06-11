@@ -15,13 +15,22 @@
         <div class="controls">
           <input type="file" id="file-input" accept=".md,.markdown,.mdown,.mkd" style="display: none;" />
           <button id="open-file-btn" class="btn">Open File</button>
+          <button id="sample-btn" class="btn btn-secondary">Try Sample</button>
         </div>
       </header>
       
       <main class="main">
         <div class="welcome" id="welcome-screen">
           <h2>Welcome to Markdown Viewer</h2>
-          <p>Click "Open File" to load a markdown file, or drag and drop a file here.</p>
+          <p>Click "Open File" to load a markdown file, drag and drop a file here, or try the sample.</p>
+          <div class="welcome-actions">
+            <button class="btn btn-large" onclick="document.querySelector('#open-file-btn').click()">
+              📁 Open File
+            </button>
+            <button class="btn btn-secondary btn-large" onclick="document.querySelector('#sample-btn').click()">
+              📄 Try Sample
+            </button>
+          </div>
         </div>
         
         <div class="viewer" id="markdown-viewer" style="display: none;">

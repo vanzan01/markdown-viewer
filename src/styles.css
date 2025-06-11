@@ -22,6 +22,28 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: background-color 0.2s ease;
+}
+
+.app.drag-over {
+  background-color: #e3f2fd;
+  border: 2px dashed #2196f3;
+}
+
+.app.drag-over .welcome::before {
+  content: "Drop your markdown file here";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(33, 150, 243, 0.9);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 .header {
@@ -61,6 +83,20 @@
   background: #0056b3;
 }
 
+.btn-secondary {
+  background: #6c757d;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  margin: 0.5rem;
+}
+
 .main {
   flex: 1;
   overflow: hidden;
@@ -76,6 +112,7 @@
   align-items: center;
   text-align: center;
   color: #6c757d;
+  position: relative;
 }
 
 .welcome h2 {
@@ -87,6 +124,14 @@
 .welcome p {
   font-size: 1.125rem;
   max-width: 600px;
+  margin-bottom: 2rem;
+}
+
+.welcome-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .viewer {
