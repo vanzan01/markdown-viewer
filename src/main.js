@@ -6,6 +6,7 @@ let currentFilePath = null;
 let isInitialized = false;
 let currentMarkdownContent = '';
 let currentTitle = 'Untitled';
+let mermaidInitialized = false;
 
 // DOM elements
 let openFileBtn;
@@ -53,6 +54,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Footnotes** - Reference-style footnotes[^1]
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
+- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
 - ✅ **HTML Export** - Export current document as standalone HTML
 - 🔄 *More features in development...*
 
@@ -102,6 +104,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ Strikethrough support
 - [x] ✅ Image rendering with enhanced styling
 - [x] ✅ HTML export functionality
+- [x] ✅ Mermaid diagram support
 - [ ] 📋 Table of contents sidebar
 - [ ] 🔍 Find in page (Ctrl+F)
 - [ ] 🖨️ Print to PDF support
@@ -432,9 +435,67 @@ Simply click "Export HTML" in the toolbar and choose where to save your file!
 - **Task lists**: Use \`- [ ]\` for unchecked, \`- [x]\` for checked
 - **Footnotes**: Use \`[^label]\` for references and \`[^label]: text\` for definitions
 
+## 📊 Mermaid Diagram Support
+
+Our markdown viewer now supports **Mermaid diagrams** for creating flowcharts, sequence diagrams, and more!
+
+### Flowchart Example
+\`\`\`mermaid
+graph TD
+    A[Open Markdown File] --> B{File Valid?}
+    B -->|Yes| C[Parse Content]
+    B -->|No| D[Show Error]
+    C --> E[Render HTML]
+    E --> F[Process Mermaid Diagrams]
+    F --> G[Display Result]
+    D --> H[End]
+    G --> H
+\`\`\`
+
+### Sequence Diagram
+\`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant FileSystem
+    participant Mermaid
+    
+    User->>App: Open File
+    App->>FileSystem: Read Markdown
+    FileSystem->>App: Return Content
+    App->>Mermaid: Process Diagrams
+    Mermaid->>App: Return SVG
+    App->>User: Display Rendered Content
+\`\`\`
+
+### Development Timeline
+\`\`\`mermaid
+gantt
+    title Markdown Viewer Development
+    dateFormat  YYYY-MM-DD
+    section Core Features
+    Project Setup       :done, setup, 2024-01-01, 2d
+    Basic Rendering     :done, basic, after setup, 5d
+    Syntax Highlighting :done, syntax, after basic, 4d
+    File Watching      :done, watch, after syntax, 4d
+    section File Operations
+    Drag and Drop      :done, dragdrop, after watch, 3d
+    File Associations  :done, assoc, after dragdrop, 2d
+    Auto Reload        :done, reload, after assoc, 3d
+    section Content Support
+    Table Rendering    :done, tables, after reload, 3d
+    Image Support      :done, images, after tables, 3d
+    Footnotes         :done, footnotes, after images, 2d
+    section Advanced Features
+    Mermaid Diagrams   :active, mermaid, after footnotes, 4d
+    HTML Export        :done, export, after mermaid, 3d
+    Find in Page       :search, after export, 5d
+    Print to PDF       :pdf, after search, 4d
+\`\`\`
+
 ---
 
-*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, and beautiful syntax highlighting.*
+*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*
 
 [^1]: This is the first footnote with detailed explanation.
 [^note]: Another footnote showing multiple reference support.`;
@@ -471,6 +532,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     
     // Add image error handling
     setupImageErrorHandling();
+    
+    // Process Mermaid diagrams
+    await processMermaidDiagrams();
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -515,6 +579,9 @@ async function loadMarkdownFile(filePath) {
     
     // Add image error handling
     setupImageErrorHandling();
+    
+    // Process Mermaid diagrams
+    await processMermaidDiagrams();
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -746,6 +813,101 @@ async function handleFileChange(filePath) {
   if (filePath === currentFilePath) {
     // Reload the file content
     await loadMarkdownFile(filePath);
+  }
+}
+
+function initializeMermaid() {
+  if (!window.mermaid || mermaidInitialized) return;
+  
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      htmlLabels: true,
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true
+      },
+      sequence: {
+        useMaxWidth: true,
+        wrap: true
+      },
+      gantt: {
+        useMaxWidth: true
+      }
+    });
+    mermaidInitialized = true;
+    console.log('✅ Mermaid initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing Mermaid:', error);
+  }
+}
+
+async function processMermaidDiagrams() {
+  if (!window.mermaid) {
+    console.log('⚠️ Mermaid not available, skipping diagram processing');
+    return;
+  }
+  
+  // Initialize Mermaid if not done already
+  initializeMermaid();
+  
+  try {
+    // Find all code blocks with mermaid class
+    const mermaidBlocks = markdownContent.querySelectorAll('code.language-mermaid, pre code.language-mermaid');
+    console.log(`Found ${mermaidBlocks.length} Mermaid diagram(s)`);
+    
+    for (let i = 0; i < mermaidBlocks.length; i++) {
+      const block = mermaidBlocks[i];
+      const diagramText = block.textContent;
+      const diagramId = `mermaid-diagram-${Date.now()}-${i}`;
+      
+      try {
+        // Create a container div for the diagram
+        const container = document.createElement('div');
+        container.className = 'mermaid-diagram-container';
+        container.style.textAlign = 'center';
+        container.style.margin = '1rem 0';
+        
+        // Render the diagram
+        const { svg } = await mermaid.render(diagramId, diagramText);
+        container.innerHTML = svg;
+        
+        // Replace the code block with the rendered diagram
+        const preElement = block.closest('pre') || block;
+        preElement.parentNode.replaceChild(container, preElement);
+        
+        console.log(`✅ Rendered Mermaid diagram ${i + 1}`);
+        
+      } catch (error) {
+        console.error(`❌ Error rendering Mermaid diagram ${i + 1}:`, error);
+        
+        // Create error fallback
+        const errorDiv = document.createElement('div');
+        errorDiv.style.border = '2px dashed #dc3545';
+        errorDiv.style.borderRadius = '0.5rem';
+        errorDiv.style.padding = '1rem';
+        errorDiv.style.margin = '1rem 0';
+        errorDiv.style.background = '#f8f9fa';
+        errorDiv.style.color = '#dc3545';
+        errorDiv.innerHTML = `
+          <div style="font-weight: bold;">📊 Mermaid Diagram Error</div>
+          <div style="font-size: 0.875rem; margin-top: 0.5rem;">Failed to render diagram</div>
+          <div style="font-size: 0.75rem; margin-top: 0.25rem; color: #6c757d;">${error.message}</div>
+          <details style="margin-top: 0.5rem;">
+            <summary style="cursor: pointer;">Show diagram source</summary>
+            <pre style="background: #fff; padding: 0.5rem; margin-top: 0.5rem; border-radius: 0.25rem; overflow-x: auto;"><code>${diagramText}</code></pre>
+          </details>
+        `;
+        
+        const preElement = block.closest('pre') || block;
+        preElement.parentNode.replaceChild(errorDiv, preElement);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error processing Mermaid diagrams:', error);
   }
 }
 

@@ -220,7 +220,7 @@
       "dependencies": [
         2
       ],
-      "status": "deferred",
+      "status": "done",
       "subtasks": [
         {
           "id": 1,
@@ -228,7 +228,7 @@
           "description": "Add Mermaid.js library to the project and ensure it is properly loaded and initialized.",
           "dependencies": [],
           "details": "Include the Mermaid.js script in the project, either via CDN or npm package, and verify it loads without errors.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -238,7 +238,7 @@
             1
           ],
           "details": "Explore and implement various diagram types (e.g., flowcharts, sequence diagrams) and enable interactive features like zoom or click events.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
