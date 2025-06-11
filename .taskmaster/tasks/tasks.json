@@ -107,7 +107,7 @@
       "id": 3,
       "title": "Add Syntax Highlighting for Code Blocks",
       "description": "Integrate syntax highlighting for code blocks in markdown files",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],
@@ -120,8 +120,8 @@
           "title": "Integrating syntect for syntax highlighting",
           "description": "Integrate the syntect library into the project to enable syntax highlighting functionality.",
           "dependencies": [],
-          "details": "This involves adding syntect as a dependency, setting up the necessary build configurations, and ensuring the library is correctly initialized within the project.",
-          "status": "pending"
+          "details": "This involves adding syntect as a dependency, setting up the necessary build configurations, and ensuring the library is correctly initialized within the project.\n<info added on 2025-06-11T13:12:29.759Z>\nAdded syntect dependency and integrated basic syntax highlighting functionality into the parse_markdown function. The implementation uses post-processing to find code blocks and apply syntect highlighting. Successfully compiles with no errors.\n</info added on 2025-06-11T13:12:29.759Z>",
+          "status": "done"
         },
         {
           "id": 2,
@@ -130,8 +130,8 @@
           "dependencies": [
             1
           ],
-          "details": "This step includes setting up language definitions, configuring syntax highlighting options following Tauri command patterns, and ensuring the HTML output is correctly formatted and passed to the frontend components while maintaining CommonMark compliance.",
-          "status": "pending"
+          "details": "This step includes setting up language definitions, configuring syntax highlighting options following Tauri command patterns, and ensuring the HTML output is correctly formatted and passed to the frontend components while maintaining CommonMark compliance.\n<info added on 2025-06-11T13:19:24.911Z>\nConfigure and test language support definitions for common programming languages. Validate pulldown-cmark HTML output format matches expected syntax highlighting structure. Refine regex patterns for accurate code block detection in markdown content, ensuring proper language identification and highlighting scope handling. Document any required adjustments to the HTML output formatting for frontend integration.\n</info added on 2025-06-11T13:19:24.911Z>\n<info added on 2025-06-11T13:21:22.034Z>\nImplemented enhanced syntax highlighting with robust language detection and theme selection capabilities. Added comprehensive support for language aliases to improve recognition accuracy. Updated regex patterns to precisely match pulldown-cmark HTML output format. Integrated debugging output system to monitor and log language recognition results and syntax highlighting performance, including success/failure cases for troubleshooting.\n</info added on 2025-06-11T13:21:22.034Z>",
+          "status": "done"
         }
       ]
     },
