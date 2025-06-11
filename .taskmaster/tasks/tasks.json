@@ -641,7 +641,7 @@
       "id": 16,
       "title": "Implement Auto-Reload File Watching",
       "description": "Add file watching to automatically reload markdown content when the file changes on disk",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         2
       ],
@@ -653,25 +653,25 @@
           "id": 1,
           "title": "Implement file watching with notify crate",
           "description": "Set up file watcher using notify crate to detect changes",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
           "title": "Implement Tauri event emission",
           "description": "Emit events to frontend when file changes are detected",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
           "title": "Implement watcher cleanup",
           "description": "Ensure watchers are properly stopped when switching files",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 4,
           "title": "Test and validate performance",
           "description": "Verify detection within 1 second and no memory leaks",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
