@@ -380,17 +380,11 @@ You can reference the same footnote multiple times[^1] throughout your document.
 Our enhanced image rendering supports both local and remote images:
 
 ### Remote Images
-![Mountain Lake Landscape](https://picsum.photos/id/1036/400/200)
+![Blue placeholder rectangle](https://via.placeholder.com/400x200/0066cc/ffffff?text=Image+Example)
 
 ### Different Image Sizes
-- Small image: ![Forest Path](https://picsum.photos/id/15/200/150)
-- Medium image: ![Ocean Waves](https://picsum.photos/id/1044/350/200)
-- Large image: ![City Architecture](https://picsum.photos/id/1018/500/250)
-
-### Diverse Image Examples
-- Nature photography: ![Flowers in Field](https://picsum.photos/id/96/300/200)
-- Technology: ![Computer Setup](https://picsum.photos/id/0/350/200)
-- Architecture: ![Modern Building](https://picsum.photos/id/1080/400/250)
+- Small image: ![Small green square](https://via.placeholder.com/150x150/4CAF50/ffffff?text=Small)
+- Large image: ![Large purple rectangle](https://via.placeholder.com/500x250/9C27B0/ffffff?text=Large+Image)
 
 ### Image Features
 - **Responsive scaling**: Images automatically fit the container width
