@@ -6,6 +6,7 @@ let currentFilePath = null;
 let isInitialized = false;
 let currentMarkdownContent = '';
 let currentTitle = 'Untitled';
+let mermaidInitialized = false;
 
 // DOM elements
 let openFileBtn;
@@ -472,6 +473,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Add image error handling
     setupImageErrorHandling();
     
+    // Process Mermaid diagrams
+    await processMermaidDiagrams();
+    
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
     
@@ -515,6 +519,9 @@ async function loadMarkdownFile(filePath) {
     
     // Add image error handling
     setupImageErrorHandling();
+    
+    // Process Mermaid diagrams
+    await processMermaidDiagrams();
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -746,6 +753,101 @@ async function handleFileChange(filePath) {
   if (filePath === currentFilePath) {
     // Reload the file content
     await loadMarkdownFile(filePath);
+  }
+}
+
+function initializeMermaid() {
+  if (!window.mermaid || mermaidInitialized) return;
+  
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      htmlLabels: true,
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true
+      },
+      sequence: {
+        useMaxWidth: true,
+        wrap: true
+      },
+      gantt: {
+        useMaxWidth: true
+      }
+    });
+    mermaidInitialized = true;
+    console.log('✅ Mermaid initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing Mermaid:', error);
+  }
+}
+
+async function processMermaidDiagrams() {
+  if (!window.mermaid) {
+    console.log('⚠️ Mermaid not available, skipping diagram processing');
+    return;
+  }
+  
+  // Initialize Mermaid if not done already
+  initializeMermaid();
+  
+  try {
+    // Find all code blocks with mermaid class
+    const mermaidBlocks = markdownContent.querySelectorAll('code.language-mermaid, pre code.language-mermaid');
+    console.log(`Found ${mermaidBlocks.length} Mermaid diagram(s)`);
+    
+    for (let i = 0; i < mermaidBlocks.length; i++) {
+      const block = mermaidBlocks[i];
+      const diagramText = block.textContent;
+      const diagramId = `mermaid-diagram-${Date.now()}-${i}`;
+      
+      try {
+        // Create a container div for the diagram
+        const container = document.createElement('div');
+        container.className = 'mermaid-diagram-container';
+        container.style.textAlign = 'center';
+        container.style.margin = '1rem 0';
+        
+        // Render the diagram
+        const { svg } = await mermaid.render(diagramId, diagramText);
+        container.innerHTML = svg;
+        
+        // Replace the code block with the rendered diagram
+        const preElement = block.closest('pre') || block;
+        preElement.parentNode.replaceChild(container, preElement);
+        
+        console.log(`✅ Rendered Mermaid diagram ${i + 1}`);
+        
+      } catch (error) {
+        console.error(`❌ Error rendering Mermaid diagram ${i + 1}:`, error);
+        
+        // Create error fallback
+        const errorDiv = document.createElement('div');
+        errorDiv.style.border = '2px dashed #dc3545';
+        errorDiv.style.borderRadius = '0.5rem';
+        errorDiv.style.padding = '1rem';
+        errorDiv.style.margin = '1rem 0';
+        errorDiv.style.background = '#f8f9fa';
+        errorDiv.style.color = '#dc3545';
+        errorDiv.innerHTML = `
+          <div style="font-weight: bold;">📊 Mermaid Diagram Error</div>
+          <div style="font-size: 0.875rem; margin-top: 0.5rem;">Failed to render diagram</div>
+          <div style="font-size: 0.75rem; margin-top: 0.25rem; color: #6c757d;">${error.message}</div>
+          <details style="margin-top: 0.5rem;">
+            <summary style="cursor: pointer;">Show diagram source</summary>
+            <pre style="background: #fff; padding: 0.5rem; margin-top: 0.5rem; border-radius: 0.25rem; overflow-x: auto;"><code>${diagramText}</code></pre>
+          </details>
+        `;
+        
+        const preElement = block.closest('pre') || block;
+        preElement.parentNode.replaceChild(errorDiv, preElement);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Error processing Mermaid diagrams:', error);
   }
 }
 
