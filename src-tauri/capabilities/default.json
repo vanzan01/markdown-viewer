@@ -8,6 +8,9 @@
     "core:event:default",
     "core:window:default",
     "opener:default",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:allow-write-text-file",
+    "fs:allow-write-file"
   ]
 }

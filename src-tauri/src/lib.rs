@@ -5,6 +5,10 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
 use tauri::{AppHandle, Emitter};
+use syntect::parsing::SyntaxSet;
+use syntect::highlighting::ThemeSet;
+use syntect::html::highlighted_html_for_string;
+use regex;
 
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
@@ -26,23 +30,287 @@ fn parse_markdown(markdown_content: &str) -> String {
     let parser = Parser::new_ext(markdown_content, options);
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
-    html_output
+    
+    // Post-process HTML to add syntax highlighting
+    post_process_syntax_highlighting(&html_output)
+}
+
+fn post_process_syntax_highlighting(html: &str) -> String {
+    // Initialize syntax highlighting resources
+    let syntax_set = SyntaxSet::load_defaults_newlines();
+    let theme_set = ThemeSet::load_defaults();
+    
+    // Use a lighter theme that works better for markdown viewers
+    let theme = theme_set.themes.get("InspiredGitHub")
+        .or_else(|| theme_set.themes.get("Solarized (light)"))
+        .or_else(|| theme_set.themes.get("base16-ocean.light"))
+        .unwrap_or(&theme_set.themes["base16-ocean.dark"]);
+    
+    // Pattern to match fenced code blocks with language (non-greedy match)
+    let re_with_lang = regex::Regex::new(r#"<pre><code class="language-([^"]+)">(.*?)</code></pre>"#).unwrap();
+    
+    // Process code blocks with language specification
+    let result = re_with_lang.replace_all(html, |caps: &regex::Captures| {
+        let language = &caps[1];
+        let code = html_escape::decode_html_entities(&caps[2]).to_string();
+        
+        // Try multiple language variations to improve matching
+        let language_variants = [
+            language,
+            &language.to_lowercase(),
+            match language.to_lowercase().as_str() {
+                "js" => "javascript",
+                "ts" => "typescript", 
+                "py" => "python",
+                "rb" => "ruby",
+                "sh" => "bash",
+                "yml" => "yaml",
+                "md" => "markdown",
+                _ => language
+            }
+        ];
+        
+        for lang_variant in &language_variants {
+            if let Some(syntax) = syntax_set.find_syntax_by_token(lang_variant) {
+                match highlighted_html_for_string(&code, &syntax_set, syntax, theme) {
+                    Ok(highlighted) => {
+                        return highlighted;
+                    },
+                    Err(_) => {
+                        // Continue trying other variants
+                    }
+                }
+            }
+        }
+        
+        // No syntax highlighting available for this language
+        
+        // Fallback to original format with proper escaping
+        format!("<pre><code class=\"language-{}\">{}</code></pre>", 
+               language, html_escape::encode_text(&code))
+    });
+    
+    result.to_string()
 }
 
 #[tauri::command]
 fn read_markdown_file(file_path: String) -> Result<String, String> {
     match fs::read_to_string(&file_path) {
         Ok(content) => {
-            let html = parse_markdown(&content);
+            let html = parse_markdown_with_base_path(&content, &file_path);
             Ok(html)
         },
         Err(e) => Err(format!("Failed to read file: {}", e))
     }
 }
 
+fn parse_markdown_with_base_path(markdown_content: &str, file_path: &str) -> String {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TABLES);
+    options.insert(Options::ENABLE_FOOTNOTES);
+    options.insert(Options::ENABLE_TASKLISTS);
+    
+    let parser = Parser::new_ext(markdown_content, options);
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, parser);
+    
+    // Post-process HTML to add syntax highlighting and resolve image paths
+    let html_with_syntax = post_process_syntax_highlighting(&html_output);
+    post_process_image_paths(&html_with_syntax, file_path)
+}
+
+fn post_process_image_paths(html: &str, file_path: &str) -> String {
+    let base_path = Path::new(file_path).parent().unwrap_or(Path::new("."));
+    
+    // Pattern to match image tags with relative paths
+    let re_img = regex::Regex::new(r#"<img src="([^"]+)"#).unwrap();
+    
+    re_img.replace_all(html, |caps: &regex::Captures| {
+        let src = &caps[1];
+        
+        // Skip URLs that are already absolute (http/https/data)
+        if src.starts_with("http://") || src.starts_with("https://") || src.starts_with("data:") || src.starts_with("file://") {
+            return caps[0].to_string();
+        }
+        
+        // Convert relative path to absolute file:// URL
+        let full_path = base_path.join(src);
+        if full_path.exists() {
+            let absolute_path = full_path.canonicalize().unwrap_or(full_path);
+            format!("<img src=\"file://{}\"", absolute_path.to_string_lossy())
+        } else {
+            // Keep original if file doesn't exist (might be intentional)
+            caps[0].to_string()
+        }
+    }).to_string()
+}
+
 #[tauri::command]
 fn get_launch_args() -> Vec<String> {
     env::args().collect()
+}
+
+#[tauri::command]
+fn export_html(content: String, title: String) -> Result<String, String> {
+    let html_template = format!(r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{}</title>
+    <style>
+        :root {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }}
+        
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }}
+        
+        body {{
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }}
+        
+        h1, h2, h3, h4, h5, h6 {{
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }}
+        
+        h1 {{
+            font-size: 2rem;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }}
+        
+        h2 {{
+            font-size: 1.5rem;
+            border-bottom: 1px solid #f1f3f4;
+            padding-bottom: 0.25rem;
+        }}
+        
+        h3 {{ font-size: 1.25rem; }}
+        h4 {{ font-size: 1rem; }}
+        
+        p {{ margin-bottom: 1rem; }}
+        
+        ul, ol {{
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }}
+        
+        li {{ margin-bottom: 0.25rem; }}
+        
+        blockquote {{
+            border-left: 4px solid #e9ecef;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #6c757d;
+            font-style: italic;
+        }}
+        
+        code {{
+            background: #f8f9fa;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 0.875rem;
+        }}
+        
+        pre {{
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }}
+        
+        pre code {{
+            background: none;
+            padding: 0;
+        }}
+        
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }}
+        
+        th, td {{
+            border: 1px solid #e9ecef;
+            padding: 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }}
+        
+        th {{
+            background: #f8f9fa;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }}
+        
+        tr:nth-child(even) {{
+            background-color: #f8f9fa;
+        }}
+        
+        tr:hover {{
+            background-color: #e9ecef;
+        }}
+        
+        img {{
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }}
+        
+        a {{
+            color: #007bff;
+            text-decoration: none;
+        }}
+        
+        a:hover {{
+            text-decoration: underline;
+        }}
+        
+        @media print {{
+            body {{
+                padding: 1rem;
+                max-width: none;
+            }}
+            
+            img {{
+                page-break-inside: avoid;
+            }}
+            
+            table {{
+                page-break-inside: avoid;
+            }}
+        }}
+    </style>
+</head>
+<body>
+{}
+</body>
+</html>"#, title, content);
+
+    Ok(html_template)
 }
 
 #[tauri::command]
@@ -106,6 +374,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(watcher_state)
         .invoke_handler(tauri::generate_handler![
             greet, 
@@ -113,7 +382,8 @@ pub fn run() {
             read_markdown_file, 
             get_launch_args,
             start_watching_file,
-            stop_watching_file
+            stop_watching_file,
+            export_html
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
