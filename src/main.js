@@ -474,13 +474,23 @@ gantt
     title Markdown Viewer Development
     dateFormat  YYYY-MM-DD
     section Core Features
-    Basic Rendering     :done, basic, 2024-01-01, 3d
-    Syntax Highlighting :done, syntax, after basic, 2d
-    File Watching      :done, watch, after syntax, 2d
-    section Advanced
-    Image Support      :done, images, after watch, 1d
-    Mermaid Diagrams   :active, mermaid, after images, 2d
-    Find in Page       :future, search, after mermaid, 3d
+    Project Setup       :done, setup, 2024-01-01, 2d
+    Basic Rendering     :done, basic, after setup, 5d
+    Syntax Highlighting :done, syntax, after basic, 4d
+    File Watching      :done, watch, after syntax, 4d
+    section File Operations
+    Drag and Drop      :done, dragdrop, after watch, 3d
+    File Associations  :done, assoc, after dragdrop, 2d
+    Auto Reload        :done, reload, after assoc, 3d
+    section Content Support
+    Table Rendering    :done, tables, after reload, 3d
+    Image Support      :done, images, after tables, 3d
+    Footnotes         :done, footnotes, after images, 2d
+    section Advanced Features
+    Mermaid Diagrams   :active, mermaid, after footnotes, 4d
+    HTML Export        :done, export, after mermaid, 3d
+    Find in Page       :search, after export, 5d
+    Print to PDF       :pdf, after search, 4d
 \`\`\`
 
 ---
