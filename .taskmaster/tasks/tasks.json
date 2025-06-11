@@ -111,7 +111,7 @@
       "dependencies": [
         2
       ],
-      "priority": "medium",
+      "priority": "high",
       "details": "Use `syntect` (v4.6.0) in the Rust backend for syntax highlighting following Tauri command patterns for HTML generation. Configure it to support 20+ common programming languages. Pass highlighted HTML to the frontend for rendering while maintaining CommonMark spec compliance.",
       "testStrategy": "Test with code samples in multiple languages to verify proper highlighting. Verify no performance degradation with large code blocks.",
       "subtasks": [
@@ -143,7 +143,7 @@
       "dependencies": [
         2
       ],
-      "priority": "medium",
+      "priority": "high",
       "details": "Extend pulldown-cmark parser options to handle image tags and table syntax. Implement CSS styling following GitHub theme for tables. Ensure local images are resolved relative to the markdown file and work in exported formats.",
       "testStrategy": "Test with various image formats (local and remote) and table structures. Verify responsive behavior and proper rendering in exported HTML/PDF.",
       "subtasks": [
@@ -431,7 +431,7 @@
       "dependencies": [
         2
       ],
-      "priority": "medium",
+      "priority": "high",
       "details": "Custom search with highlighting, keyboard navigation between matches, browser-like UX. Reference: UI_UX_GUIDE.md (interaction patterns, keyboard navigation), TECH_ARCHITECTURE.md (performance requirements)",
       "testStrategy": "Test search accuracy, performance with large files (up to 10MB), keyboard navigation UX. Ensure search performance <100ms.",
       "subtasks": [
@@ -683,7 +683,7 @@
       "dependencies": [
         2
       ],
-      "priority": "high",
+      "priority": "medium",
       "details": "Implementation strategies from docs:\n1. Use lazy loading for non-critical UI components\n2. Implement file chunking for large document processing\n3. Optimize render cycles using memoization\n4. Pre-warm critical services during splash screen\n5. Use compressed binary format for document storage",
       "testStrategy": "1. Benchmark cold start time with system profiler\n2. Measure file open operations with varying file sizes (1KB-10MB)\n3. Monitor memory usage during stress tests\n4. Validate scrolling performance with 10MB files\n5. Compare results against documented benchmarks in TECH_ARCHITECTURE.md",
       "subtasks": [
