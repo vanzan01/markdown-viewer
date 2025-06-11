@@ -32,6 +32,20 @@ npm run tauri dev
 npm run tauri build
 ```
 
+#### WSL Development
+
+If developing in WSL with Windows-installed Rust, use these commands instead:
+
+```bash
+# Start development server (WSL + Windows Rust)
+powershell.exe -Command '$env:PATH += ";C:\Users\nicki\scoop\apps\rustup\current\.cargo\bin"; cd "H:\Active\Markdown-Viewer\project\markdown-viewer"; npm run tauri dev'
+
+# Build for production (WSL + Windows Rust)
+powershell.exe -Command '$env:PATH += ";C:\Users\nicki\scoop\apps\rustup\current\.cargo\bin"; cd "H:\Active\Markdown-Viewer\project\markdown-viewer"; npm run tauri build'
+```
+
+For troubleshooting WSL + Rust setup issues, see [ai-docs/TROUBLESHOOTING.md](ai-docs/TROUBLESHOOTING.md).
+
 ### Performance Targets
 
 - Cold start: <500ms
@@ -53,6 +67,7 @@ npm run tauri build
 - [Implementation Guide](ai-docs/IMPLEMENTATION_GUIDES.md)
 - [UI/UX Guide](ai-docs/UI_UX_GUIDE.md)
 - [Vanilla JS Patterns](ai-docs/VANILLA_JS_PATTERNS.md)
+- [WSL Development Troubleshooting](ai-docs/TROUBLESHOOTING.md)
 
 ## License
 

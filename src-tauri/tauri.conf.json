@@ -29,7 +29,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "identifier": "com.markdown-viewer.app",
     "category": "DeveloperTool",
     "shortDescription": "Simple Markdown Viewer",
     "longDescription": "A fast, simple markdown file viewer that works like a PDF viewer",
