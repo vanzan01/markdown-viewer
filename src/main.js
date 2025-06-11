@@ -380,11 +380,11 @@ You can reference the same footnote multiple times[^1] throughout your document.
 Our enhanced image rendering supports both local and remote images:
 
 ### Remote Images
-![Blue placeholder rectangle](https://via.placeholder.com/400x200/0066cc/ffffff?text=Image+Example)
+![Sample Test Image](https://httpbin.org/image/png)
 
 ### Different Image Sizes
-- Small image: ![Small green square](https://via.placeholder.com/150x150/4CAF50/ffffff?text=Small)
-- Large image: ![Large purple rectangle](https://via.placeholder.com/500x250/9C27B0/ffffff?text=Large+Image)
+- JPEG sample: ![JPEG Test](https://httpbin.org/image/jpeg)  
+- WebP sample: ![WebP Test](https://httpbin.org/image/webp)
 
 ### Image Features
 - **Responsive scaling**: Images automatically fit the container width
