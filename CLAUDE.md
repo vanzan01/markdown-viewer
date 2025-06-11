@@ -13,6 +13,23 @@ The frontend (`/src/`) serves as the webview content that gets bundled into the 
 
 ## Development Commands
 
+### WSL + Windows Rust Environment
+
+This project uses Windows-installed Rust from WSL. Use PowerShell commands to access the Windows Rust toolchain:
+
+```bash
+# Run in development mode (WSL environment)
+powershell.exe -Command '$env:PATH += ";C:\Users\nicki\scoop\apps\rustup\current\.cargo\bin"; cd "H:\Active\Markdown-Viewer\project\markdown-viewer"; npm run tauri dev'
+
+# Build for production (WSL environment)
+powershell.exe -Command '$env:PATH += ";C:\Users\nicki\scoop\apps\rustup\current\.cargo\bin"; cd "H:\Active\Markdown-Viewer\project\markdown-viewer"; npm run tauri build'
+
+# Check Rust code from WSL
+powershell.exe -Command '$env:PATH += ";C:\Users\nicki\scoop\apps\rustup\current\.cargo\bin"; cd "H:\Active\Markdown-Viewer\project\markdown-viewer\src-tauri"; cargo check'
+```
+
+**If you encounter Rust/Cargo issues in WSL**, refer to `ai-docs/TROUBLESHOOTING.md` for detailed setup and troubleshooting steps.
+
 ### Building and Running
 ```bash
 # Run in development mode (auto-reloads on changes)
