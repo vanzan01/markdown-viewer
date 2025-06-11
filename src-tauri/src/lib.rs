@@ -5,6 +5,10 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
 use tauri::{AppHandle, Emitter};
+use syntect::parsing::SyntaxSet;
+use syntect::highlighting::ThemeSet;
+use syntect::html::highlighted_html_for_string;
+use regex;
 
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
@@ -26,7 +30,66 @@ fn parse_markdown(markdown_content: &str) -> String {
     let parser = Parser::new_ext(markdown_content, options);
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
-    html_output
+    
+    // Post-process HTML to add syntax highlighting
+    post_process_syntax_highlighting(&html_output)
+}
+
+fn post_process_syntax_highlighting(html: &str) -> String {
+    // Initialize syntax highlighting resources
+    let syntax_set = SyntaxSet::load_defaults_newlines();
+    let theme_set = ThemeSet::load_defaults();
+    let theme = &theme_set.themes["base16-ocean.dark"];
+    
+    // Debug: print the HTML to see the actual format
+    eprintln!("Raw HTML output: {}", html);
+    
+    // Try multiple regex patterns that might match pulldown-cmark output
+    let patterns = [
+        r#"<pre><code class="language-([^"]+)">([^<]*)</code></pre>"#,
+        r#"<pre><code class="([^"]+)">([^<]*)</code></pre>"#,
+        r#"<pre><code>([^<]*)</code></pre>"#,
+    ];
+    
+    let mut result = html.to_string();
+    
+    for pattern in &patterns {
+        if let Ok(re) = regex::Regex::new(pattern) {
+            result = re.replace_all(&result, |caps: &regex::Captures| {
+                let (language, code) = if caps.len() == 3 {
+                    // Pattern with language
+                    (&caps[1], &caps[2])
+                } else {
+                    // Pattern without language
+                    ("", &caps[1])
+                };
+                
+                let decoded_code = html_escape::decode_html_entities(code).to_string();
+                
+                if !language.is_empty() {
+                    if let Some(syntax) = syntax_set.find_syntax_by_token(language) {
+                        match highlighted_html_for_string(&decoded_code, &syntax_set, syntax, theme) {
+                            Ok(highlighted) => {
+                                eprintln!("Successfully highlighted {} code", language);
+                                highlighted
+                            },
+                            Err(e) => {
+                                eprintln!("Failed to highlight {} code: {}", language, e);
+                                format!("<pre><code class=\"language-{}\">{}</code></pre>", language, html_escape::encode_text(&decoded_code))
+                            }
+                        }
+                    } else {
+                        eprintln!("No syntax found for language: {}", language);
+                        format!("<pre><code class=\"language-{}\">{}</code></pre>", language, html_escape::encode_text(&decoded_code))
+                    }
+                } else {
+                    format!("<pre><code>{}</code></pre>", html_escape::encode_text(&decoded_code))
+                }
+            }).to_string();
+        }
+    }
+    
+    result
 }
 
 #[tauri::command]
