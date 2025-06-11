@@ -384,7 +384,12 @@ Our enhanced image rendering supports both local and remote images:
 
 ### Different Image Sizes
 - Small image: ![Small landscape](https://picsum.photos/200/150?random=2)
-- Large image: ![Large cityscape](https://picsum.photos/600/300?random=3)
+- Medium image: ![Medium nature](https://picsum.photos/350/200?random=4)
+- Large image: ![Large cityscape](https://picsum.photos/500/250?random=5)
+
+### Alternative Image Sources
+- Placeholder service: ![Placeholder example](https://via.placeholder.com/300x150/4CAF50/ffffff?text=Placeholder+Example)
+- Lorem Picsum specific: ![Architecture](https://picsum.photos/id/1018/400/200)
 
 ### Image Features
 - **Responsive scaling**: Images automatically fit the container width
@@ -469,6 +474,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     
+    // Add image error handling
+    setupImageErrorHandling();
+    
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
     
@@ -509,6 +517,9 @@ async function loadMarkdownFile(filePath) {
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     currentFilePath = filePath;
+    
+    // Add image error handling
+    setupImageErrorHandling();
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -741,6 +752,42 @@ async function handleFileChange(filePath) {
     // Reload the file content
     await loadMarkdownFile(filePath);
   }
+}
+
+function setupImageErrorHandling() {
+  const images = markdownContent.querySelectorAll('img');
+  images.forEach(img => {
+    img.addEventListener('error', function() {
+      console.warn('Image failed to load:', img.src);
+      
+      // Add error styling
+      img.style.border = '2px dashed #dc3545';
+      img.style.padding = '1rem';
+      img.style.background = '#f8f9fa';
+      img.style.color = '#dc3545';
+      
+      // Create fallback content
+      const fallback = document.createElement('div');
+      fallback.style.textAlign = 'center';
+      fallback.style.padding = '2rem';
+      fallback.style.border = '2px dashed #dc3545';
+      fallback.style.borderRadius = '0.5rem';
+      fallback.style.background = '#f8f9fa';
+      fallback.style.color = '#dc3545';
+      fallback.innerHTML = `
+        <div>📷 Image failed to load</div>
+        <div style="font-size: 0.875rem; margin-top: 0.5rem;">${img.alt || 'No description'}</div>
+        <div style="font-size: 0.75rem; margin-top: 0.25rem; color: #6c757d;">${img.src}</div>
+      `;
+      
+      // Replace the image with the fallback
+      img.parentNode.replaceChild(fallback, img);
+    });
+    
+    img.addEventListener('load', function() {
+      console.log('Image loaded successfully:', img.src);
+    });
+  });
 }
 
 async function exportHtml() {

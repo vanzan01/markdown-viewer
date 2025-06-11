@@ -255,6 +255,23 @@
   border-radius: 0.5rem;
   margin: 1rem 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s ease;
+}
+
+/* Image loading states */
+.content img:not([src]) {
+  opacity: 0.5;
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+}
+
+.content img[alt]:after {
+  content: "📷 " attr(alt);
+  display: block;
+  text-align: center;
+  padding: 1rem;
+  color: #6c757d;
+  font-style: italic;
 }
 
 /* Image alignment classes */
