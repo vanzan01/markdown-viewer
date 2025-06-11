@@ -54,6 +54,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Footnotes** - Reference-style footnotes[^1]
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
+- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
 - ✅ **HTML Export** - Export current document as standalone HTML
 - 🔄 *More features in development...*
 
@@ -103,6 +104,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ Strikethrough support
 - [x] ✅ Image rendering with enhanced styling
 - [x] ✅ HTML export functionality
+- [x] ✅ Mermaid diagram support
 - [ ] 📋 Table of contents sidebar
 - [ ] 🔍 Find in page (Ctrl+F)
 - [ ] 🖨️ Print to PDF support
@@ -433,9 +435,57 @@ Simply click "Export HTML" in the toolbar and choose where to save your file!
 - **Task lists**: Use \`- [ ]\` for unchecked, \`- [x]\` for checked
 - **Footnotes**: Use \`[^label]\` for references and \`[^label]: text\` for definitions
 
+## 📊 Mermaid Diagram Support
+
+Our markdown viewer now supports **Mermaid diagrams** for creating flowcharts, sequence diagrams, and more!
+
+### Flowchart Example
+\`\`\`mermaid
+graph TD
+    A[Open Markdown File] --> B{File Valid?}
+    B -->|Yes| C[Parse Content]
+    B -->|No| D[Show Error]
+    C --> E[Render HTML]
+    E --> F[Process Mermaid Diagrams]
+    F --> G[Display Result]
+    D --> H[End]
+    G --> H
+\`\`\`
+
+### Sequence Diagram
+\`\`\`mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant FileSystem
+    participant Mermaid
+    
+    User->>App: Open File
+    App->>FileSystem: Read Markdown
+    FileSystem->>App: Return Content
+    App->>Mermaid: Process Diagrams
+    Mermaid->>App: Return SVG
+    App->>User: Display Rendered Content
+\`\`\`
+
+### Development Timeline
+\`\`\`mermaid
+gantt
+    title Markdown Viewer Development
+    dateFormat  YYYY-MM-DD
+    section Core Features
+    Basic Rendering     :done, basic, 2024-01-01, 3d
+    Syntax Highlighting :done, syntax, after basic, 2d
+    File Watching      :done, watch, after syntax, 2d
+    section Advanced
+    Image Support      :done, images, after watch, 1d
+    Mermaid Diagrams   :active, mermaid, after images, 2d
+    Find in Page       :future, search, after mermaid, 3d
+\`\`\`
+
 ---
 
-*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, and beautiful syntax highlighting.*
+*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*
 
 [^1]: This is the first footnote with detailed explanation.
 [^note]: Another footnote showing multiple reference support.`;
