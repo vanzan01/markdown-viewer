@@ -1670,9 +1670,14 @@ async function exportHtml() {
 
     if (filePath) {
       console.log('Generating HTML document...');
+      
+      // Get the current rendered content
+      const contentElement = document.querySelector('#markdown-content');
+      const renderedContent = contentElement ? contentElement.innerHTML : currentMarkdownContent;
+      
       // Generate complete HTML document
       const htmlDocument = await invoke('export_html', { 
-        content: currentMarkdownContent, 
+        content: renderedContent, 
         title: currentTitle 
       });
       
