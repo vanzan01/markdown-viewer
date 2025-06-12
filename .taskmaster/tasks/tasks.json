@@ -470,7 +470,7 @@
       "id": 12,
       "title": "Add Print to PDF and Export as HTML",
       "description": "Enable users to print markdown content as PDF, save it as HTML, or copy selected text with formatting preserved.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         10
       ],
@@ -484,7 +484,7 @@
           "description": "Leverage the browser's built-in print functionality to generate a PDF from the current webpage.",
           "dependencies": [],
           "details": "This involves calling the window.print() method and configuring the print dialog to save as PDF.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -492,7 +492,7 @@
           "description": "Save the fully rendered HTML of the current webpage as a file on the local system.",
           "dependencies": [],
           "details": "This involves capturing the current DOM, converting it to a string, and using the File API or a download link to save it.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -500,7 +500,7 @@
           "description": "Implement functionality to copy selected text with formatting preserved.",
           "dependencies": [],
           "details": "This involves capturing the selected content with its HTML structure and using the Clipboard API to copy it with formatting.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
