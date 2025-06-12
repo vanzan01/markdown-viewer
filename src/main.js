@@ -130,28 +130,96 @@ function performSearch(term) {
     originalContentHTML = markdownContent.innerHTML;
   }
   
-  // Use innerHTML replacement approach for more reliable results
-  const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+  // Use DOM-based approach that preserves Mermaid diagrams
+  const walker = document.createTreeWalker(
+    markdownContent,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        const parent = node.parentElement;
+        
+        // Skip script and style elements
+        if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip Mermaid diagram containers to preserve rendered SVGs
+        if (parent && (parent.classList.contains('mermaid-diagram-container') || 
+                       parent.closest('.mermaid-diagram-container'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip SVG elements (Mermaid renders as SVG)
+        if (parent && (parent.tagName === 'SVG' || parent.closest('svg'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip search highlight spans to avoid duplicate results
+        if (parent && (parent.classList.contains('search-highlight') || parent.classList.contains('search-highlight-current'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Only accept text nodes with actual content (not just whitespace)
+        if (!node.textContent || node.textContent.trim().length === 0) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
   
-  // Replace text with highlighted spans, being careful not to break HTML
-  let highlightedHTML = originalContentHTML.replace(/>([^<]*)/g, (match, textContent) => {
-    if (!textContent.trim()) return match;
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+  
+  // Search through text nodes and create highlights
+  const regex = new RegExp(escapeRegex(term), 'gi');
+  
+  textNodes.forEach(textNode => {
+    const text = textNode.textContent;
+    const matches = [...text.matchAll(regex)];
     
-    const highlightedText = textContent.replace(regex, (match) => {
-      const resultIndex = searchResults.length;
-      searchResults.push({ text: match, index: resultIndex }); // Placeholder for now
-      return `<span class="search-highlight" data-search-result="${resultIndex}">${match}</span>`;
-    });
-    
-    return `>${highlightedText}`;
+    if (matches.length > 0) {
+      // Create document fragment to hold the new content
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      
+      matches.forEach(match => {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+        
+        // Add text before match
+        if (matchStart > lastIndex) {
+          const beforeText = text.slice(lastIndex, matchStart);
+          fragment.appendChild(document.createTextNode(beforeText));
+        }
+        
+        // Create highlighted span for match
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'search-highlight';
+        highlightSpan.textContent = match[0];
+        highlightSpan.setAttribute('data-search-result', searchResults.length);
+        fragment.appendChild(highlightSpan);
+        
+        // Add to results array
+        searchResults.push(highlightSpan);
+        
+        lastIndex = matchEnd;
+      });
+      
+      // Add remaining text after last match
+      if (lastIndex < text.length) {
+        const afterText = text.slice(lastIndex);
+        fragment.appendChild(document.createTextNode(afterText));
+      }
+      
+      // Replace the original text node with the fragment
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
   });
-  
-  // Update the content
-  markdownContent.innerHTML = highlightedHTML;
-  
-  // Now get the actual DOM elements for our search results
-  const actualSpans = markdownContent.querySelectorAll('.search-highlight');
-  searchResults = Array.from(actualSpans);
   
   // Update counter and navigate to first result
   updateSearchCounter();
@@ -163,9 +231,18 @@ function performSearch(term) {
 }
 
 function clearSearchResults() {
-  // Restore original HTML if we have highlights
-  if (searchResults.length > 0 && originalContentHTML && markdownContent) {
-    markdownContent.innerHTML = originalContentHTML;
+  // Remove individual highlight spans without destroying Mermaid diagrams
+  searchResults.forEach(span => {
+    if (span && span.parentNode) {
+      // Replace the highlight span with its text content
+      const textNode = document.createTextNode(span.textContent);
+      span.parentNode.replaceChild(textNode, span);
+    }
+  });
+  
+  // Normalize text nodes to merge adjacent text nodes
+  if (markdownContent) {
+    markdownContent.normalize();
   }
   
   searchResults = [];
@@ -744,14 +821,14 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     
-    // Store original HTML for search functionality
-    originalContentHTML = htmlContent;
-    
     // Add image error handling
     setupImageErrorHandling();
     
     // Process Mermaid diagrams
     await processMermaidDiagrams();
+    
+    // Store original HTML for search functionality AFTER Mermaid processing
+    originalContentHTML = markdownContent.innerHTML;
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -799,14 +876,14 @@ async function loadMarkdownFile(filePath) {
     markdownContent.innerHTML = htmlContent;
     currentFilePath = filePath;
     
-    // Store original HTML for search functionality
-    originalContentHTML = htmlContent;
-    
     // Add image error handling
     setupImageErrorHandling();
     
     // Process Mermaid diagrams
     await processMermaidDiagrams();
+    
+    // Store original HTML for search functionality AFTER Mermaid processing
+    originalContentHTML = markdownContent.innerHTML;
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
