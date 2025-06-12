@@ -342,6 +342,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
 - ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
 - ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
@@ -392,7 +393,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ HTML export functionality
 - [x] ✅ Mermaid diagram support
 - [ ] 📋 Table of contents sidebar
-- [ ] 🔍 Find in page (Ctrl+F)
+- [x] 🔍 Find in page (Ctrl+F)
 - [ ] 🖨️ Print to PDF support
 - [ ] 🌙 Dark mode themes
 
@@ -700,6 +701,15 @@ Simply click "Export HTML" in the toolbar and choose where to save your file!
 3. **Auto-reload**: Edit files in your editor and see changes instantly
 4. **Export**: Click "Export HTML" to save as standalone HTML file
 
+### Find in Page
+- **Open search**: Press \`Ctrl+F\` to open the search dialog
+- **Search navigation**: 
+  - \`Enter\` - Navigate to next result
+  - \`Shift+Enter\` - Navigate to previous result
+  - Use ↑/↓ buttons in search dialog for navigation
+- **Close search**: Press \`Escape\` or click × button
+- **Features**: Real-time search with highlighting, result counter, smooth scrolling to matches
+
 ### Testing Syntax Highlighting
 - Create code blocks with \`\`\`language
 - Supported: js, ts, py, rs, html, css, sql, json, bash, and more
@@ -775,7 +785,7 @@ gantt
     section Advanced Features
     Mermaid Diagrams   :active, mermaid, after footnotes, 4d
     HTML Export        :done, export, after mermaid, 3d
-    Find in Page       :search, after export, 5d
+    Find in Page       :done, search, after export, 5d
     Print to PDF       :pdf, after search, 4d
 \`\`\`
 
