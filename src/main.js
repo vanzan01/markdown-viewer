@@ -17,6 +17,74 @@ let searchTerm = '';
 let isSearchDialogVisible = false;
 let originalContentHTML = '';
 
+// Security: HTML sanitization function
+function sanitizeHTML(html) {
+  if (typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 'del', 'ins',
+        'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'blockquote', 'pre', 'code', 'kbd', 'samp', 'var',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+        'a', 'img', 'figure', 'figcaption',
+        'div', 'span', 'hr', 'sup', 'sub',
+        'details', 'summary',
+        // Mermaid diagram containers (but not script tags)
+        'svg', 'g', 'path', 'text', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'title', 'alt', 'src', 'width', 'height',
+        'class', 'id', 'style', 'target', 'rel',
+        'data-search-result',
+        // SVG attributes for Mermaid
+        'viewBox', 'xmlns', 'x', 'y', 'cx', 'cy', 'r', 'rx', 'ry',
+        'fill', 'stroke', 'stroke-width', 'd', 'transform',
+        'text-anchor', 'font-family', 'font-size', 'font-weight'
+      ],
+      ALLOW_DATA_ATTR: false,
+      ALLOW_UNKNOWN_PROTOCOLS: false,
+      ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|file|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+      // Keep safe URL protocols only
+      FORBID_TAGS: ['script', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'iframe'],
+      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit']
+    });
+  } else {
+    console.warn('DOMPurify not available, using basic sanitization');
+    // Basic fallback sanitization
+    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+               .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+               .replace(/javascript:/gi, '');
+  }
+}
+
+// Security: Input validation for search queries
+function validateSearchInput(input) {
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
+  
+  // Limit search input length to prevent DoS
+  if (input.length > 1000) {
+    console.warn('Search input too long, truncating');
+    input = input.substring(0, 1000);
+  }
+  
+  // Remove potential script injection attempts
+  const dangerous_patterns = [
+    '<script', '</script', 'javascript:', 'data:', 'vbscript:', 'onload=', 'onerror='
+  ];
+  
+  for (const pattern of dangerous_patterns) {
+    if (input.toLowerCase().includes(pattern)) {
+      console.warn('Dangerous pattern detected in search input:', pattern);
+      return ''; // Return empty string for safety
+    }
+  }
+  
+  return input;
+}
+
 // DOM elements
 let openFileBtn;
 let fileInput;
@@ -87,7 +155,14 @@ function hideSearchDialog() {
 }
 
 function handleSearchInput(event) {
-  const newSearchTerm = event.target.value.trim();
+  const rawInput = event.target.value;
+  const validatedInput = validateSearchInput(rawInput);
+  const newSearchTerm = validatedInput.trim();
+  
+  // Update the input field if validation changed the content
+  if (event.target.value !== validatedInput) {
+    event.target.value = validatedInput;
+  }
   
   if (newSearchTerm !== searchTerm) {
     searchTerm = newSearchTerm;
@@ -828,8 +903,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     currentMarkdownContent = htmlContent;
     currentTitle = fileName;
     
-    // Display the parsed HTML
-    markdownContent.innerHTML = htmlContent;
+    // Display the parsed HTML with sanitization
+    const sanitizedHTML = sanitizeHTML(htmlContent);
+    markdownContent.innerHTML = sanitizedHTML;
     
     // Add image error handling
     setupImageErrorHandling();
@@ -882,8 +958,9 @@ async function loadMarkdownFile(filePath) {
     currentMarkdownContent = htmlContent;
     currentTitle = filePath.split(/[\\/]/).pop();
     
-    // Display the parsed HTML
-    markdownContent.innerHTML = htmlContent;
+    // Display the parsed HTML with sanitization
+    const sanitizedHTML = sanitizeHTML(htmlContent);
+    markdownContent.innerHTML = sanitizedHTML;
     currentFilePath = filePath;
     
     // Add image error handling

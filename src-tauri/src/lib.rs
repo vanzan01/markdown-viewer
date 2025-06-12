@@ -1,7 +1,7 @@
 use pulldown_cmark::{Parser, Options, html};
 use std::fs;
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
 use tauri::{AppHandle, Emitter};
@@ -13,6 +13,133 @@ use regex;
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
 
+// Security validation functions
+fn validate_file_path(file_path: &str) -> Result<PathBuf, String> {
+    let path = Path::new(file_path);
+    
+    // Check for path traversal attempts
+    if file_path.contains("..") {
+        return Err("Path traversal detected: '..' not allowed in file paths".to_string());
+    }
+    
+    // Check for absolute paths to system directories (Windows and Unix)
+    let absolute_path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map_err(|e| format!("Failed to get current directory: {}", e))?
+            .join(path)
+    };
+    
+    // Canonicalize to resolve any remaining relative components
+    let canonical_path = absolute_path.canonicalize()
+        .map_err(|e| format!("Invalid file path: {}", e))?;
+    
+    // Check file extension - only allow markdown files
+    let allowed_extensions = ["md", "markdown", "mdown", "mkd"];
+    if let Some(extension) = canonical_path.extension() {
+        if let Some(ext_str) = extension.to_str() {
+            if !allowed_extensions.contains(&ext_str.to_lowercase().as_str()) {
+                return Err(format!("Invalid file extension: {}. Only markdown files are allowed.", ext_str));
+            }
+        } else {
+            return Err("Invalid file extension encoding".to_string());
+        }
+    } else {
+        return Err("File must have a valid markdown extension (.md, .markdown, .mdown, .mkd)".to_string());
+    }
+    
+    // Prevent access to system directories
+    let canonical_str = canonical_path.to_string_lossy().to_lowercase();
+    let forbidden_paths = if cfg!(windows) {
+        vec![
+            "c:\\windows",
+            "c:\\program files",
+            "c:\\program files (x86)",
+            "c:\\users\\default",
+            "c:\\programdata",
+        ]
+    } else {
+        vec![
+            "/etc",
+            "/proc",
+            "/sys",
+            "/dev",
+            "/root",
+            "/boot",
+            "/var/log",
+        ]
+    };
+    
+    for forbidden in &forbidden_paths {
+        if canonical_str.starts_with(forbidden) {
+            return Err(format!("Access denied: Cannot read files from system directory {}", forbidden));
+        }
+    }
+    
+    // Check if file actually exists
+    if !canonical_path.exists() {
+        return Err(format!("File does not exist: {}", canonical_path.display()));
+    }
+    
+    // Check if it's actually a file (not a directory)
+    if !canonical_path.is_file() {
+        return Err(format!("Path is not a file: {}", canonical_path.display()));
+    }
+    
+    Ok(canonical_path)
+}
+
+fn sanitize_markdown_content(content: &str) -> String {
+    // Basic content validation - check for suspicious patterns
+    let suspicious_patterns = [
+        "<script",
+        "javascript:",
+        "data:text/html",
+        "vbscript:",
+        "on[a-z]*=", // onerror, onclick, onload, etc.
+    ];
+    
+    let content_lower = content.to_lowercase();
+    for pattern in &suspicious_patterns {
+        if content_lower.contains(pattern) {
+            eprintln!("Warning: Suspicious content detected in markdown: {}", pattern);
+        }
+    }
+    
+    // Return content as-is for now - client-side sanitization will handle the rest
+    // In a future version, we could implement server-side sanitization here
+    content.to_string()
+}
+
+fn validate_image_url(url: &str) -> bool {
+    // Allow local file:// URLs and common image hosting domains
+    if url.starts_with("file://") || url.starts_with("data:image/") {
+        return true;
+    }
+    
+    // Allow specific trusted domains for images
+    let trusted_domains = [
+        "httpbin.org",
+        "via.placeholder.com",
+        "picsum.photos",
+        "images.unsplash.com",
+        "raw.githubusercontent.com",
+    ];
+    
+    if url.starts_with("http://") || url.starts_with("https://") {
+        for domain in &trusted_domains {
+            if url.contains(domain) {
+                return true;
+            }
+        }
+        eprintln!("Warning: Image URL from untrusted domain: {}", url);
+        return false;
+    }
+    
+    true
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -21,13 +148,16 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 fn parse_markdown(markdown_content: &str) -> String {
+    // Sanitize content first
+    let sanitized_content = sanitize_markdown_content(markdown_content);
+    
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
     options.insert(Options::ENABLE_TABLES);
     options.insert(Options::ENABLE_FOOTNOTES);
     options.insert(Options::ENABLE_TASKLISTS);
     
-    let parser = Parser::new_ext(markdown_content, options);
+    let parser = Parser::new_ext(&sanitized_content, options);
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
     
@@ -95,9 +225,14 @@ fn post_process_syntax_highlighting(html: &str) -> String {
 
 #[tauri::command]
 fn read_markdown_file(file_path: String) -> Result<String, String> {
-    match fs::read_to_string(&file_path) {
+    // Validate file path for security
+    let validated_path = validate_file_path(&file_path)?;
+    
+    match fs::read_to_string(&validated_path) {
         Ok(content) => {
-            let html = parse_markdown_with_base_path(&content, &file_path);
+            // Sanitize content
+            let sanitized_content = sanitize_markdown_content(&content);
+            let html = parse_markdown_with_base_path(&sanitized_content, &validated_path.to_string_lossy());
             Ok(html)
         },
         Err(e) => Err(format!("Failed to read file: {}", e))
@@ -129,13 +264,30 @@ fn post_process_image_paths(html: &str, file_path: &str) -> String {
     re_img.replace_all(html, |caps: &regex::Captures| {
         let src = &caps[1];
         
+        // Validate URL for security
+        if !validate_image_url(src) {
+            eprintln!("Blocked unsafe image URL: {}", src);
+            return format!("<img src=\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkJsb2NrZWQgSW1hZ2U8L3RleHQ+PC9zdmc+\" alt=\"Blocked unsafe image\"");
+        }
+        
         // Skip URLs that are already absolute (http/https/data)
         if src.starts_with("http://") || src.starts_with("https://") || src.starts_with("data:") || src.starts_with("file://") {
             return caps[0].to_string();
         }
         
-        // Convert relative path to absolute file:// URL
+        // Convert relative path to absolute file:// URL with validation
         let full_path = base_path.join(src);
+        
+        // Security check: ensure the resolved path doesn't escape the base directory
+        if let Ok(canonical_full) = full_path.canonicalize() {
+            if let Ok(canonical_base) = base_path.canonicalize() {
+                if !canonical_full.starts_with(&canonical_base) {
+                    eprintln!("Blocked path traversal attempt in image: {}", src);
+                    return format!("<img src=\"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkJsb2NrZWQgSW1hZ2U8L3RleHQ+PC9zdmc+\" alt=\"Blocked unsafe image\"");
+                }
+            }
+        }
+        
         if full_path.exists() {
             let absolute_path = full_path.canonicalize().unwrap_or(full_path);
             format!("<img src=\"file://{}\"", absolute_path.to_string_lossy())
@@ -319,11 +471,15 @@ fn start_watching_file(
     app_handle: AppHandle,
     watcher_state: tauri::State<WatcherState>,
 ) -> Result<(), String> {
+    // Validate file path for security
+    let validated_path = validate_file_path(&file_path)?;
+    let validated_path_str = validated_path.to_string_lossy().to_string();
+    
     // Stop any existing watcher first
     stop_watching_file(watcher_state.clone()).ok();
     
     let app_handle_clone = app_handle.clone();
-    let file_path_clone = file_path.clone();
+    let file_path_clone = validated_path_str.clone();
     
     let mut watcher = notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
         match res {
@@ -345,7 +501,7 @@ fn start_watching_file(
     }).map_err(|e| format!("Failed to create watcher: {}", e))?;
     
     // Watch the file's parent directory
-    let path = Path::new(&file_path);
+    let path = Path::new(&validated_path_str);
     if let Some(parent) = path.parent() {
         watcher.watch(parent, RecursiveMode::NonRecursive)
             .map_err(|e| format!("Failed to watch directory: {}", e))?;
