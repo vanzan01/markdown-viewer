@@ -85,6 +85,77 @@ function validateSearchInput(input) {
   return input;
 }
 
+// Recent files management
+function getRecentFiles() {
+  try {
+    const recentFiles = localStorage.getItem('markdownViewer_recentFiles');
+    return recentFiles ? JSON.parse(recentFiles) : [];
+  } catch (error) {
+    console.warn('Error reading recent files from localStorage:', error);
+    return [];
+  }
+}
+
+function addToRecentFiles(filePath, fileName) {
+  try {
+    let recentFiles = getRecentFiles();
+    
+    // Remove if already exists to avoid duplicates
+    recentFiles = recentFiles.filter(file => file.path !== filePath);
+    
+    // Add to beginning of list
+    recentFiles.unshift({
+      path: filePath,
+      name: fileName || filePath.split(/[\\\/]/).pop(),
+      timestamp: Date.now()
+    });
+    
+    // Limit to MAX_RECENT_FILES
+    if (recentFiles.length > MAX_RECENT_FILES) {
+      recentFiles = recentFiles.slice(0, MAX_RECENT_FILES);
+    }
+    
+    localStorage.setItem('markdownViewer_recentFiles', JSON.stringify(recentFiles));
+    updateRecentFilesUI();
+  } catch (error) {
+    console.warn('Error saving recent files to localStorage:', error);
+  }
+}
+
+function removeFromRecentFiles(filePath) {
+  try {
+    let recentFiles = getRecentFiles();
+    recentFiles = recentFiles.filter(file => file.path !== filePath);
+    localStorage.setItem('markdownViewer_recentFiles', JSON.stringify(recentFiles));
+    updateRecentFilesUI();
+  } catch (error) {
+    console.warn('Error removing file from recent files:', error);
+  }
+}
+
+function validateRecentFiles() {
+  // Note: In a Tauri app, we can't directly check if files exist from the frontend
+  // This validation would need to be done via a Tauri command
+  // For now, we'll implement basic cleanup and add file validation later
+  try {
+    let recentFiles = getRecentFiles();
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    
+    // Remove files older than one week
+    recentFiles = recentFiles.filter(file => file.timestamp > oneWeekAgo);
+    
+    localStorage.setItem('markdownViewer_recentFiles', JSON.stringify(recentFiles));
+    updateRecentFilesUI();
+  } catch (error) {
+    console.warn('Error validating recent files:', error);
+  }
+}
+
+// Recent files variables
+let recentFilesDropdown = null;
+let isRecentFilesVisible = false;
+const MAX_RECENT_FILES = 10;
+
 // DOM elements
 let openFileBtn;
 let fileInput;
@@ -375,6 +446,120 @@ function updateSearchCounter() {
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Recent files UI functions
+function createRecentFilesDropdown() {
+  if (recentFilesDropdown) return;
+  
+  recentFilesDropdown = document.createElement('div');
+  recentFilesDropdown.className = 'recent-files-dropdown';
+  recentFilesDropdown.innerHTML = `
+    <div class="recent-files-header">
+      <span class="recent-files-title">Recent Files</span>
+      <button class="recent-files-close" title="Close">×</button>
+    </div>
+    <div class="recent-files-list"></div>
+    <div class="recent-files-footer">
+      <button class="recent-files-clear" title="Clear All">Clear All</button>
+    </div>
+  `;
+  
+  document.body.appendChild(recentFilesDropdown);
+  
+  // Event listeners
+  const closeBtn = recentFilesDropdown.querySelector('.recent-files-close');
+  const clearBtn = recentFilesDropdown.querySelector('.recent-files-clear');
+  
+  closeBtn.addEventListener('click', hideRecentFiles);
+  clearBtn.addEventListener('click', clearRecentFiles);
+  
+  // Click outside to close
+  document.addEventListener('click', (event) => {
+    if (isRecentFilesVisible && 
+        !recentFilesDropdown.contains(event.target) && 
+        !event.target.closest('#open-file-btn')) {
+      hideRecentFiles();
+    }
+  });
+}
+
+function showRecentFiles() {
+  createRecentFilesDropdown();
+  updateRecentFilesUI();
+  
+  if (getRecentFiles().length === 0) {
+    return; // Don't show if no recent files
+  }
+  
+  isRecentFilesVisible = true;
+  recentFilesDropdown.style.display = 'block';
+  
+  // Position near the open file button
+  const openBtn = document.querySelector('#open-file-btn');
+  if (openBtn) {
+    const rect = openBtn.getBoundingClientRect();
+    recentFilesDropdown.style.top = (rect.bottom + 5) + 'px';
+    recentFilesDropdown.style.left = rect.left + 'px';
+  }
+}
+
+function hideRecentFiles() {
+  if (!recentFilesDropdown) return;
+  
+  isRecentFilesVisible = false;
+  recentFilesDropdown.style.display = 'none';
+}
+
+function updateRecentFilesUI() {
+  if (!recentFilesDropdown) return;
+  
+  const listContainer = recentFilesDropdown.querySelector('.recent-files-list');
+  const recentFiles = getRecentFiles();
+  
+  if (recentFiles.length === 0) {
+    listContainer.innerHTML = '<div class="recent-files-empty">No recent files</div>';
+    return;
+  }
+  
+  listContainer.innerHTML = recentFiles.map(file => `
+    <div class="recent-file-item" data-path="${encodeURIComponent(file.path)}">
+      <div class="recent-file-content">
+        <div class="recent-file-name" title="${file.path}">${file.name}</div>
+        <div class="recent-file-path">${file.path}</div>
+      </div>
+      <button class="recent-file-remove" title="Remove from list">×</button>
+    </div>
+  `).join('');
+  
+  // Add click handlers
+  listContainer.querySelectorAll('.recent-file-item').forEach(item => {
+    const filePath = decodeURIComponent(item.dataset.path);
+    
+    item.addEventListener('click', (event) => {
+      if (event.target.classList.contains('recent-file-remove')) {
+        event.stopPropagation();
+        removeFromRecentFiles(filePath);
+      } else {
+        hideRecentFiles();
+        loadMarkdownFile(filePath).catch(error => {
+          console.error('Failed to load recent file:', error);
+          alert('Failed to open file. It may have been moved or deleted.');
+          removeFromRecentFiles(filePath);
+        });
+      }
+    });
+  });
+}
+
+function clearRecentFiles() {
+  try {
+    localStorage.removeItem('markdownViewer_recentFiles');
+    updateRecentFilesUI();
+    hideRecentFiles();
+  } catch (error) {
+    console.warn('Error clearing recent files:', error);
+  }
 }
 
 async function openFile() {
@@ -978,6 +1163,9 @@ async function loadMarkdownFile(filePath) {
     // Update window title
     document.title = `Markdown Viewer - ${currentTitle}`;
     
+    // Add to recent files
+    addToRecentFiles(filePath, currentTitle);
+    
     // Start watching the file for changes
     await startWatchingFile(filePath);
     
@@ -1410,6 +1598,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
+  openFileBtn.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    showRecentFiles();
+  });
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
   
@@ -1451,6 +1643,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   
   // Check for file associations (launch arguments)
   const foundFile = await checkLaunchArgs();
+  
+  // Initialize recent files
+  validateRecentFiles();
   
   // If no file was passed via launch args, show welcome screen
   if (!foundFile) {

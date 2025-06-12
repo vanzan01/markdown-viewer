@@ -587,3 +587,215 @@
     box-shadow: 0 0 0 2px rgba(236, 201, 75, 0.5);
   }
 }
+
+/* Recent Files Dropdown */
+.recent-files-dropdown {
+  display: none;
+  position: fixed;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.recent-files-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recent-files-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.recent-files-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.recent-files-close:hover {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.recent-files-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.recent-files-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.recent-file-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+.recent-file-item:hover {
+  background-color: #f9fafb;
+}
+
+.recent-file-item:last-child {
+  border-bottom: none;
+}
+
+.recent-file-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-file-name {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-path {
+  font-size: 0.75rem;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-remove {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  line-height: 1;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.recent-file-item:hover .recent-file-remove {
+  opacity: 1;
+}
+
+.recent-file-remove:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.recent-files-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.recent-files-clear {
+  background: none;
+  border: 1px solid #d1d5db;
+  color: #6b7280;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.recent-files-clear:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+/* Dark mode styles for recent files */
+@media (prefers-color-scheme: dark) {
+  .recent-files-dropdown {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .recent-files-header {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .recent-files-title {
+    color: #e5e7eb;
+  }
+
+  .recent-files-close {
+    color: #9ca3af;
+  }
+
+  .recent-files-close:hover {
+    background-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .recent-file-item {
+    border-bottom-color: #374151;
+  }
+
+  .recent-file-item:hover {
+    background-color: #111827;
+  }
+
+  .recent-file-name {
+    color: #e5e7eb;
+  }
+
+  .recent-file-path {
+    color: #9ca3af;
+  }
+
+  .recent-files-empty {
+    color: #9ca3af;
+  }
+
+  .recent-files-footer {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .recent-files-clear {
+    border-color: #374151;
+    color: #9ca3af;
+  }
+
+  .recent-files-clear:hover {
+    background-color: #7f1d1d;
+    border-color: #dc2626;
+    color: #fecaca;
+  }
+}
