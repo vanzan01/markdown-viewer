@@ -156,6 +156,13 @@ let recentFilesDropdown = null;
 let isRecentFilesVisible = false;
 const MAX_RECENT_FILES = 10;
 
+// Zoom functionality variables
+let currentZoomLevel = 100;
+const MIN_ZOOM = 50;
+const MAX_ZOOM = 200;
+const ZOOM_STEP = 10;
+let zoomLevelsByFile = new Map(); // Store zoom levels per file
+
 // DOM elements
 let openFileBtn;
 let fileInput;
@@ -568,6 +575,93 @@ function clearRecentFiles() {
     hideRecentFiles();
   } catch (error) {
     console.warn('Error clearing recent files:', error);
+  }
+}
+
+// Zoom functionality
+function updateZoomLevel(newZoomLevel) {
+  // Clamp zoom level to valid range
+  currentZoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoomLevel));
+  
+  // Apply zoom to the markdown content
+  const contentElement = document.querySelector('#markdown-content');
+  if (contentElement) {
+    const scale = currentZoomLevel / 100;
+    contentElement.style.transform = `scale(${scale})`;
+    contentElement.style.transformOrigin = 'top left';
+    
+    // Adjust the content container to account for scaling
+    // When scaling up, we need more space; when scaling down, we need less
+    contentElement.style.width = `${100 / scale}%`;
+    contentElement.style.height = scale > 1 ? 'auto' : 'auto';
+    
+    // Ensure the viewer container can scroll properly
+    const viewerElement = document.querySelector('#markdown-viewer');
+    if (viewerElement) {
+      viewerElement.style.overflow = 'auto';
+    }
+  }
+  
+  // Update zoom level display
+  const zoomLevelElement = document.querySelector('#zoom-level');
+  if (zoomLevelElement) {
+    zoomLevelElement.textContent = `${currentZoomLevel}%`;
+  }
+  
+  // Update button states
+  updateZoomButtonStates();
+  
+  // Store zoom level for current file
+  if (currentFilePath) {
+    zoomLevelsByFile.set(currentFilePath, currentZoomLevel);
+  }
+}
+
+function updateZoomButtonStates() {
+  const zoomInBtn = document.querySelector('#zoom-in-btn');
+  const zoomOutBtn = document.querySelector('#zoom-out-btn');
+  
+  if (zoomInBtn) {
+    zoomInBtn.disabled = currentZoomLevel >= MAX_ZOOM;
+  }
+  
+  if (zoomOutBtn) {
+    zoomOutBtn.disabled = currentZoomLevel <= MIN_ZOOM;
+  }
+}
+
+function zoomIn() {
+  updateZoomLevel(currentZoomLevel + ZOOM_STEP);
+}
+
+function zoomOut() {
+  updateZoomLevel(currentZoomLevel - ZOOM_STEP);
+}
+
+function resetZoom() {
+  updateZoomLevel(100);
+}
+
+function restoreZoomForFile(filePath) {
+  if (filePath && zoomLevelsByFile.has(filePath)) {
+    const savedZoom = zoomLevelsByFile.get(filePath);
+    updateZoomLevel(savedZoom);
+  } else {
+    updateZoomLevel(100); // Default zoom
+  }
+}
+
+function showZoomControls() {
+  const zoomControls = document.querySelector('#zoom-controls');
+  if (zoomControls) {
+    zoomControls.style.display = 'flex';
+  }
+}
+
+function hideZoomControls() {
+  const zoomControls = document.querySelector('#zoom-controls');
+  if (zoomControls) {
+    zoomControls.style.display = 'none';
   }
 }
 
@@ -1113,6 +1207,12 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
     
+    // Show zoom controls
+    showZoomControls();
+    
+    // Reset zoom for sample content
+    resetZoom();
+    
     // Update window title
     document.title = `Markdown Viewer - ${fileName}`;
     
@@ -1168,6 +1268,12 @@ async function loadMarkdownFile(filePath) {
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
+    
+    // Show zoom controls
+    showZoomControls();
+    
+    // Restore zoom level for this file
+    restoreZoomForFile(filePath);
     
     // Update window title
     document.title = `Markdown Viewer - ${currentTitle}`;
@@ -1611,6 +1717,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
   
+  // Zoom control event listeners
+  document.querySelector('#zoom-in-btn').addEventListener('click', zoomIn);
+  document.querySelector('#zoom-out-btn').addEventListener('click', zoomOut);
+  document.querySelector('#zoom-reset-btn').addEventListener('click', resetZoom);
+  
   // Global keyboard shortcuts
   document.addEventListener('keydown', (event) => {
     // Ctrl+F for find in page
@@ -1622,6 +1733,19 @@ window.addEventListener("DOMContentLoaded", async () => {
     else if (event.key === 'Escape' && isSearchDialogVisible) {
       event.preventDefault();
       hideSearchDialog();
+    }
+    // Zoom keyboard shortcuts
+    else if (event.ctrlKey && (event.key === '=' || event.key === '+')) {
+      event.preventDefault();
+      zoomIn();
+    }
+    else if (event.ctrlKey && event.key === '-') {
+      event.preventDefault();
+      zoomOut();
+    }
+    else if (event.ctrlKey && event.key === '0') {
+      event.preventDefault();
+      resetZoom();
     }
   });
   
