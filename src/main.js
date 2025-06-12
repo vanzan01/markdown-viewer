@@ -343,11 +343,6 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
 - ✅ **HTML Export** - Export current document as standalone HTML
 - ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
-  - Ctrl+F to open search
-  - Enter/Shift+Enter navigation
-  - Search highlighting
-  - Result counter
-  - Escape to close
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
