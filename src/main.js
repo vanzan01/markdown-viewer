@@ -130,11 +130,46 @@ function performSearch(term) {
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: function(node) {
-        // Skip script and style elements
         const parent = node.parentElement;
+        
+        // Skip script and style elements
         if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
           return NodeFilter.FILTER_REJECT;
         }
+        
+        // Skip hidden elements
+        if (parent && (parent.style.display === 'none' || parent.hidden)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip elements that are not visible (check computed style safely)
+        try {
+          if (parent && window.getComputedStyle(parent).display === 'none') {
+            return NodeFilter.FILTER_REJECT;
+          }
+        } catch (e) {
+          // Ignore errors from getComputedStyle
+        }
+        
+        // Skip search highlight spans to avoid duplicate results
+        if (parent && (parent.classList.contains('search-highlight') || parent.classList.contains('search-highlight-current'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip if parent is already a search highlight span
+        let currentElement = parent;
+        while (currentElement) {
+          if (currentElement.classList && (currentElement.classList.contains('search-highlight') || currentElement.classList.contains('search-highlight-current'))) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          currentElement = currentElement.parentElement;
+        }
+        
+        // Only accept text nodes with actual content (not just whitespace)
+        if (!node.textContent || node.textContent.trim().length === 0) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
         return NodeFilter.FILTER_ACCEPT;
       }
     }

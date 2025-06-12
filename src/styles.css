@@ -443,7 +443,7 @@
 /* Find in page styles */
 .search-dialog {
   position: fixed;
-  top: 1rem;
+  top: 5rem;
   right: 1rem;
   z-index: 1000;
   display: none;
