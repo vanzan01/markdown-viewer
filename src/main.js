@@ -1,6 +1,9 @@
 const { invoke } = window.__TAURI__.core;
 const { open, save } = window.__TAURI__.dialog;
-const { writeTextFile } = window.__TAURI__.fs;
+const { writeFile, BaseDirectory } = window.__TAURI__.fs;
+
+// No processor needed - use html-docx-js directly
+
 
 let currentFilePath = null;
 let isInitialized = false;
@@ -170,6 +173,7 @@ let welcomeScreen;
 let markdownViewer;
 let markdownContent;
 let exportHtmlBtn;
+let exportDocxBtn;
 let printPdfBtn;
 
 function createSearchDialog() {
@@ -1160,6 +1164,8 @@ gantt
 [^1]: This is the first footnote with detailed explanation.
 [^note]: Another footnote showing multiple reference support.`;
 
+    // Store sample markdown for DOCX export
+    window.sampleMarkdownContent = sampleMarkdown;
     await loadMarkdownContent(sampleMarkdown);
   } catch (error) {
     console.error('Error opening sample file:', error);
@@ -1207,6 +1213,7 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     
     // Show export buttons
     exportHtmlBtn.style.display = 'inline-block';
+    exportDocxBtn.style.display = 'inline-block';
     printPdfBtn.style.display = 'inline-block';
     
     // Show zoom controls
@@ -1672,26 +1679,23 @@ async function exportHtml() {
     console.log('Selected file path:', filePath);
 
     if (filePath) {
-      console.log('Generating HTML document...');
+      console.log('Generating enhanced HTML document...');
       
       // Get the current rendered content
       const contentElement = document.querySelector('#markdown-content');
       const renderedContent = contentElement ? contentElement.innerHTML : currentMarkdownContent;
       
-      // Generate complete HTML document
-      const htmlDocument = await invoke('export_html', { 
-        content: renderedContent, 
-        title: currentTitle 
-      });
+      // Create self-contained HTML document with embedded CSS and resources
+      const htmlDocument = generateSelfContainedHtml(renderedContent, currentTitle);
       
-      console.log('HTML document generated, length:', htmlDocument.length);
+      console.log('Enhanced HTML document generated, length:', htmlDocument.length);
       
-      // Write the HTML file using Tauri's fs plugin
+      // Write the HTML file using Tauri v2 API
       console.log('Writing file...');
-      await writeTextFile(filePath, htmlDocument);
+      await writeFile(filePath, new TextEncoder().encode(htmlDocument));
       
       console.log('File written successfully');
-      alert(`HTML exported successfully to: ${filePath}`);
+      alert(`Enhanced HTML exported successfully to: ${filePath}`);
     } else {
       console.log('No file path selected');
     }
@@ -1700,6 +1704,142 @@ async function exportHtml() {
     console.error('Error details:', error.message, error.stack);
     alert('Failed to export HTML: ' + error.message);
   }
+}
+
+function generateSelfContainedHtml(content, title) {
+  // Get the current CSS styles
+  const cssStyles = Array.from(document.styleSheets)
+    .map(sheet => {
+      try {
+        return Array.from(sheet.cssRules)
+          .map(rule => rule.cssText)
+          .join('\n');
+      } catch (e) {
+        // Handle CORS issues with external stylesheets
+        return '';
+      }
+    })
+    .join('\n');
+
+  // Additional CSS for better standalone display
+  const additionalCSS = `
+    /* Enhanced standalone styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+      margin: 0;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    /* Print styles */
+    @media print {
+      body { margin: 1rem; padding: 0; }
+      .content { box-shadow: none; }
+    }
+    
+    /* Ensure images are responsive */
+    img { max-width: 100%; height: auto; }
+    
+    /* Table improvements */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+    
+    /* Code improvements */
+    pre, code {
+      background-color: #f5f5f5;
+      border-radius: 3px;
+    }
+    
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    
+    code {
+      padding: 0.2rem 0.4rem;
+      font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    }
+    
+    /* Mermaid diagram styling */
+    .mermaid-diagram-container {
+      background: #fafafa;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+    
+    .mermaid-diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+  `;
+
+  // Create the complete HTML document
+  const htmlDocument = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(title)}</title>
+    <style>
+${cssStyles}
+${additionalCSS}
+    </style>
+    <!-- Mermaid for diagrams -->
+    <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: true,
+                    theme: 'default',
+                    securityLevel: 'loose'
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="content">
+        ${content}
+    </div>
+    
+    <!-- Footer with generation info -->
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #eee; font-size: 0.875rem; color: #666; text-align: center;">
+        <p>Generated from ${escapeHtml(title)} on ${new Date().toLocaleString()}</p>
+        <p>Created with <a href="https://github.com/vanzan01/markdown-viewer" style="color: #007bff; text-decoration: none;">Markdown Viewer</a></p>
+    </footer>
+</body>
+</html>`;
+
+  return htmlDocument;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 async function printToPdf() {
@@ -1805,6 +1945,108 @@ async function printToPdf() {
   }
 }
 
+async function exportDocx() {
+  try {
+    console.log('🔄 Starting DOCX export using Pandoc WebAssembly...');
+    
+    // Input validation
+    if (!currentMarkdownContent) {
+      throw new Error('No content to export');
+    }
+
+    // Check if DOCX generator is ready
+    if (!window.docxReady || !window.generateDocxFromMarkdown) {
+      throw new Error('DOCX generator not loaded');
+    }
+
+    console.log('📄 Getting original markdown content...');
+    
+    // Get the original markdown content (stored when file was loaded)
+    // We need the raw markdown, not the rendered HTML
+    const markdownText = await getOriginalMarkdownContent();
+    
+    if (!markdownText) {
+      throw new Error('Could not retrieve original markdown content');
+    }
+
+    console.log('🔄 Converting markdown to DOCX using docx.js...');
+    
+    // Generate filename without extension
+    const titleWithoutExt = currentTitle.replace(/\.(md|markdown|mdown|mkd)$/i, '');
+    
+    // Use the docx.js library to generate DOCX
+    const uint8Array = await window.generateDocxFromMarkdown(markdownText, titleWithoutExt);
+
+    console.log('📊 Final DOCX size:', uint8Array.length, 'bytes');
+
+    if (uint8Array.length === 0) {
+      throw new Error('Generated DOCX is empty');
+    }
+
+    // Generate filename
+    const defaultName = currentTitle.replace(/\.(md|markdown|mdown|mkd)$/i, '') + '.docx';
+    console.log('📁 Default filename:', defaultName);
+    
+    // Show save dialog
+    const filePath = await save({
+      title: 'Export as DOCX',
+      defaultPath: defaultName,
+      filters: [
+        {
+          name: 'Word Document',
+          extensions: ['docx']
+        }
+      ]
+    });
+
+    if (!filePath) {
+      console.log('❌ No file path selected');
+      return;
+    }
+
+    console.log('📁 Selected file path:', filePath);
+    
+    // Save file using Tauri v2 API
+    console.log('🔄 Writing DOCX file...');
+    await writeFile(filePath, uint8Array);
+    
+    console.log('✅ DOCX exported successfully to:', filePath);
+    alert(`DOCX exported successfully to: ${filePath}`);
+    
+  } catch (error) {
+    console.error('❌ Error exporting DOCX:', error);
+    console.error('Error details:', error.message);
+    
+    if (error.message && error.message.includes('not loaded')) {
+      alert('Pandoc WebAssembly library not loaded. Please refresh the page and try again.');
+    } else if (error.message && error.message.includes('No content')) {
+      alert('No content to export. Please load a markdown file first.');
+    } else {
+      alert('Failed to export DOCX: ' + (error.message || 'Unknown error'));
+    }
+  }
+}
+
+// Helper function to get original markdown content
+async function getOriginalMarkdownContent() {
+  // If we have a current file path, re-read the file to get original markdown
+  if (currentFilePath) {
+    try {
+      const content = await invoke('read_file_content', { filePath: currentFilePath });
+      return content;
+    } catch (error) {
+      console.warn('Could not re-read file content:', error);
+    }
+  }
+  
+  // For sample content, use the stored original markdown
+  if (currentTitle === 'Sample' && window.sampleMarkdownContent) {
+    return window.sampleMarkdownContent;
+  }
+  
+  throw new Error('Could not retrieve original markdown content');
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   console.log('🚀 DOM Content Loaded');
   console.log('🔍 Checking Tauri availability...');
@@ -1814,6 +2056,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log('window.__TAURI__.webview:', !!window.__TAURI__?.webview);
   console.log('window.__TAURI__.core:', !!window.__TAURI__?.core);
   
+  // Debug library availability
+  console.log('🔍 Checking libraries...');
+  console.log('DOMPurify:', typeof DOMPurify !== 'undefined');
+  console.log('mermaid:', typeof mermaid !== 'undefined');
+  console.log('saveAs:', typeof saveAs !== 'undefined');
+  console.log('window.docxReady:', window.docxReady);
+  console.log('window.generateDocxFromMarkdown:', typeof window.generateDocxFromMarkdown !== 'undefined');
+  console.log('docx library:', typeof docx !== 'undefined');
+  
   // Get DOM elements
   openFileBtn = document.querySelector('#open-file-btn');
   fileInput = document.querySelector('#file-input');
@@ -1821,6 +2072,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   markdownViewer = document.querySelector('#markdown-viewer');
   markdownContent = document.querySelector('#markdown-content');
   exportHtmlBtn = document.querySelector('#export-html-btn');
+  exportDocxBtn = document.querySelector('#export-docx-btn');
   printPdfBtn = document.querySelector('#print-pdf-btn');
 
   // Setup event listeners
@@ -1828,6 +2080,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
+  exportDocxBtn.addEventListener('click', exportDocx);
   printPdfBtn.addEventListener('click', printToPdf);
   
   // Zoom control event listeners
