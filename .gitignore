@@ -49,3 +49,8 @@ Thumbs.db
 *.msi
 *.exe
 *.AppImage
+
+# Test files (keep out of repository)
+test-*.md
+test-*.rs
+security-test.md
