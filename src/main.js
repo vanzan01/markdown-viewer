@@ -170,6 +170,7 @@ let welcomeScreen;
 let markdownViewer;
 let markdownContent;
 let exportHtmlBtn;
+let printPdfBtn;
 
 function createSearchDialog() {
   if (searchDialog) return;
@@ -1204,8 +1205,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Store original HTML for search functionality AFTER Mermaid processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export button
+    // Show export buttons
     exportHtmlBtn.style.display = 'inline-block';
+    printPdfBtn.style.display = 'inline-block';
     
     // Show zoom controls
     showZoomControls();
@@ -1266,8 +1268,9 @@ async function loadMarkdownFile(filePath) {
     // Store original HTML for search functionality AFTER Mermaid processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export button
+    // Show export buttons
     exportHtmlBtn.style.display = 'inline-block';
+    printPdfBtn.style.display = 'inline-block';
     
     // Show zoom controls
     showZoomControls();
@@ -1699,6 +1702,109 @@ async function exportHtml() {
   }
 }
 
+async function printToPdf() {
+  try {
+    if (!currentMarkdownContent) {
+      alert('No content to print. Please load a markdown file first.');
+      return;
+    }
+
+    console.log('Print to PDF function called');
+    
+    // Reset zoom to 100% for printing to ensure consistent layout
+    const originalZoom = currentZoomLevel;
+    if (currentZoomLevel !== 100) {
+      updateZoomLevel(100);
+    }
+    
+    // Add print-specific styles for better PDF output
+    const printStyles = document.createElement('style');
+    printStyles.id = 'print-styles';
+    printStyles.textContent = `
+      @media print {
+        /* Hide UI elements */
+        .header { display: none !important; }
+        .controls { display: none !important; }
+        .zoom-controls { display: none !important; }
+        
+        /* Optimize content for print */
+        .app { height: auto !important; }
+        .main { display: block !important; overflow: visible !important; }
+        .viewer { overflow: visible !important; display: block !important; }
+        .content { 
+          max-width: none !important; 
+          margin: 0 !important; 
+          padding: 1rem !important;
+          transform: none !important;
+          width: 100% !important;
+        }
+        
+        /* Improve text rendering */
+        body { 
+          font-size: 12pt !important; 
+          line-height: 1.4 !important;
+          color: black !important;
+          background: white !important;
+        }
+        
+        /* Table improvements */
+        table { 
+          border-collapse: collapse !important;
+          page-break-inside: avoid;
+        }
+        
+        /* Code block improvements */
+        pre, code {
+          background: #f5f5f5 !important;
+          border: 1px solid #ddd !important;
+          page-break-inside: avoid;
+        }
+        
+        /* Image handling */
+        img {
+          max-width: 100% !important;
+          page-break-inside: avoid;
+        }
+        
+        /* Heading improvements */
+        h1, h2, h3, h4, h5, h6 {
+          page-break-after: avoid;
+          color: black !important;
+        }
+        
+        /* Mermaid diagrams */
+        .mermaid-diagram-container {
+          background: white !important;
+          border: 1px solid #ddd !important;
+          page-break-inside: avoid;
+        }
+      }
+    `;
+    
+    document.head.appendChild(printStyles);
+    
+    // Trigger print dialog
+    window.print();
+    
+    // Clean up: remove print styles and restore zoom
+    setTimeout(() => {
+      const printStylesElement = document.getElementById('print-styles');
+      if (printStylesElement) {
+        printStylesElement.remove();
+      }
+      
+      // Restore original zoom level
+      if (originalZoom !== 100) {
+        updateZoomLevel(originalZoom);
+      }
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error printing to PDF:', error);
+    alert('Failed to print: ' + error.message);
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   console.log('🚀 DOM Content Loaded');
   console.log('🔍 Checking Tauri availability...');
@@ -1715,12 +1821,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   markdownViewer = document.querySelector('#markdown-viewer');
   markdownContent = document.querySelector('#markdown-content');
   exportHtmlBtn = document.querySelector('#export-html-btn');
+  printPdfBtn = document.querySelector('#print-pdf-btn');
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
+  printPdfBtn.addEventListener('click', printToPdf);
   
   // Zoom control event listeners
   document.querySelector('#zoom-in-btn').addEventListener('click', zoomIn);
