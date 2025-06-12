@@ -586,14 +586,19 @@ function updateZoomLevel(newZoomLevel) {
   // Apply zoom to the markdown content
   const contentElement = document.querySelector('#markdown-content');
   if (contentElement) {
-    contentElement.style.transform = `scale(${currentZoomLevel / 100})`;
+    const scale = currentZoomLevel / 100;
+    contentElement.style.transform = `scale(${scale})`;
     contentElement.style.transformOrigin = 'top left';
     
-    // Adjust container to prevent overflow issues
+    // Adjust the content container to account for scaling
+    // When scaling up, we need more space; when scaling down, we need less
+    contentElement.style.width = `${100 / scale}%`;
+    contentElement.style.height = scale > 1 ? 'auto' : 'auto';
+    
+    // Ensure the viewer container can scroll properly
     const viewerElement = document.querySelector('#markdown-viewer');
     if (viewerElement) {
-      const scale = currentZoomLevel / 100;
-      viewerElement.style.overflow = scale > 1 ? 'auto' : 'visible';
+      viewerElement.style.overflow = 'auto';
     }
   }
   

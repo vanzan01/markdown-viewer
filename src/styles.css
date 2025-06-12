@@ -197,6 +197,8 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+  transform-origin: top left;
+  box-sizing: border-box;
 }
 
 /* Markdown content styles */
