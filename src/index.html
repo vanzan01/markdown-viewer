@@ -16,7 +16,14 @@
         <h1>Markdown Viewer</h1>
         <div class="controls">
           <input type="file" id="file-input" accept=".md,.markdown,.mdown,.mkd" style="display: none;" />
-          <button id="open-file-btn" class="btn">Open File</button>
+          <div class="split-button">
+            <button id="open-file-btn" class="btn split-btn-main">Open File</button>
+            <button id="recent-files-btn" class="btn split-btn-dropdown" title="Recent Files">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2 4l4 4 4-4z"/>
+              </svg>
+            </button>
+          </div>
           <button id="sample-btn" class="btn btn-secondary">Try Sample</button>
           <button id="export-html-btn" class="btn btn-secondary" style="display: none;">Export HTML</button>
         </div>

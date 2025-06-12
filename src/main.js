@@ -478,7 +478,8 @@ function createRecentFilesDropdown() {
   document.addEventListener('click', (event) => {
     if (isRecentFilesVisible && 
         !recentFilesDropdown.contains(event.target) && 
-        !event.target.closest('#open-file-btn')) {
+        !event.target.closest('#recent-files-btn') &&
+        !event.target.closest('.split-button')) {
       hideRecentFiles();
     }
   });
@@ -495,12 +496,20 @@ function showRecentFiles() {
   isRecentFilesVisible = true;
   recentFilesDropdown.style.display = 'block';
   
-  // Position near the open file button
-  const openBtn = document.querySelector('#open-file-btn');
-  if (openBtn) {
-    const rect = openBtn.getBoundingClientRect();
+  // Position near the recent files dropdown button
+  const recentBtn = document.querySelector('#recent-files-btn');
+  if (recentBtn) {
+    const rect = recentBtn.getBoundingClientRect();
     recentFilesDropdown.style.top = (rect.bottom + 5) + 'px';
-    recentFilesDropdown.style.left = rect.left + 'px';
+    
+    // Set initial position first, then adjust based on width
+    recentFilesDropdown.style.left = rect.right + 'px';
+    
+    // After a short delay, adjust positioning based on actual width
+    setTimeout(() => {
+      const dropdownWidth = recentFilesDropdown.offsetWidth;
+      recentFilesDropdown.style.left = (rect.right - dropdownWidth) + 'px';
+    }, 0);
   }
 }
 
@@ -1598,10 +1607,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
-  openFileBtn.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-    showRecentFiles();
-  });
+  document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
   

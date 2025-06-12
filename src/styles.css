@@ -97,6 +97,60 @@
   margin: 0.5rem;
 }
 
+/* Split Button */
+.split-button {
+  display: inline-flex;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.split-btn-main {
+  border-radius: 0;
+  border-right: none;
+  position: relative;
+}
+
+.split-btn-dropdown {
+  border-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 0.5rem;
+  min-width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #007bff;
+}
+
+.split-btn-dropdown svg {
+  width: 12px;
+  height: 12px;
+}
+
+.split-btn-main:hover {
+  background: #0056b3;
+  border-right: none;
+}
+
+.split-btn-dropdown:hover {
+  background: #0056b3;
+}
+
+.split-btn-main:focus,
+.split-btn-dropdown:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  z-index: 1;
+  position: relative;
+}
+
+/* Make sure the split button appears as one cohesive unit */
+.split-button .btn {
+  box-shadow: none;
+  margin: 0;
+}
+
 .main {
   flex: 1;
   overflow: hidden;
