@@ -15,6 +15,7 @@ let searchResults = [];
 let currentResultIndex = -1;
 let searchTerm = '';
 let isSearchDialogVisible = false;
+let originalContentHTML = '';
 
 // DOM elements
 let openFileBtn;
@@ -124,108 +125,33 @@ function performSearch(term) {
   // Clear previous results
   clearSearchResults();
   
-  // Get all text nodes in the content
-  const walker = document.createTreeWalker(
-    markdownContent,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: function(node) {
-        const parent = node.parentElement;
-        
-        // Skip script and style elements
-        if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        
-        // Skip hidden elements
-        if (parent && (parent.style.display === 'none' || parent.hidden)) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        
-        // Skip elements that are not visible (check computed style safely)
-        try {
-          if (parent && window.getComputedStyle(parent).display === 'none') {
-            return NodeFilter.FILTER_REJECT;
-          }
-        } catch (e) {
-          // Ignore errors from getComputedStyle
-        }
-        
-        // Skip search highlight spans to avoid duplicate results
-        if (parent && (parent.classList.contains('search-highlight') || parent.classList.contains('search-highlight-current'))) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        
-        // Skip if parent is already a search highlight span
-        let currentElement = parent;
-        while (currentElement) {
-          if (currentElement.classList && (currentElement.classList.contains('search-highlight') || currentElement.classList.contains('search-highlight-current'))) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          currentElement = currentElement.parentElement;
-        }
-        
-        // Only accept text nodes with actual content (not just whitespace)
-        if (!node.textContent || node.textContent.trim().length === 0) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    }
-  );
-  
-  const textNodes = [];
-  let node;
-  while (node = walker.nextNode()) {
-    textNodes.push(node);
+  // Store original HTML if not already stored
+  if (!originalContentHTML) {
+    originalContentHTML = markdownContent.innerHTML;
   }
   
-  // Search through text nodes
-  const regex = new RegExp(escapeRegex(term), 'gi');
+  // Use innerHTML replacement approach for more reliable results
+  const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
   
-  textNodes.forEach(textNode => {
-    const text = textNode.textContent;
-    const matches = [...text.matchAll(regex)];
+  // Replace text with highlighted spans, being careful not to break HTML
+  let highlightedHTML = originalContentHTML.replace(/>([^<]*)/g, (match, textContent) => {
+    if (!textContent.trim()) return match;
     
-    if (matches.length > 0) {
-      // Split the text node and wrap matches
-      let lastIndex = 0;
-      const parent = textNode.parentNode;
-      
-      matches.forEach(match => {
-        const matchStart = match.index;
-        const matchEnd = matchStart + match[0].length;
-        
-        // Insert text before match
-        if (matchStart > lastIndex) {
-          const beforeText = text.slice(lastIndex, matchStart);
-          parent.insertBefore(document.createTextNode(beforeText), textNode);
-        }
-        
-        // Create highlighted span for match
-        const highlightSpan = document.createElement('span');
-        highlightSpan.className = 'search-highlight';
-        highlightSpan.textContent = match[0];
-        highlightSpan.setAttribute('data-search-result', searchResults.length);
-        parent.insertBefore(highlightSpan, textNode);
-        
-        // Add to results array
-        searchResults.push(highlightSpan);
-        
-        lastIndex = matchEnd;
-      });
-      
-      // Insert remaining text after last match
-      if (lastIndex < text.length) {
-        const afterText = text.slice(lastIndex);
-        parent.insertBefore(document.createTextNode(afterText), textNode);
-      }
-      
-      // Remove original text node
-      parent.removeChild(textNode);
-    }
+    const highlightedText = textContent.replace(regex, (match) => {
+      const resultIndex = searchResults.length;
+      searchResults.push({ text: match, index: resultIndex }); // Placeholder for now
+      return `<span class="search-highlight" data-search-result="${resultIndex}">${match}</span>`;
+    });
+    
+    return `>${highlightedText}`;
   });
+  
+  // Update the content
+  markdownContent.innerHTML = highlightedHTML;
+  
+  // Now get the actual DOM elements for our search results
+  const actualSpans = markdownContent.querySelectorAll('.search-highlight');
+  searchResults = Array.from(actualSpans);
   
   // Update counter and navigate to first result
   updateSearchCounter();
@@ -237,17 +163,9 @@ function performSearch(term) {
 }
 
 function clearSearchResults() {
-  // Remove all highlight spans and restore original text
-  searchResults.forEach(span => {
-    const parent = span.parentNode;
-    if (parent) {
-      parent.replaceChild(document.createTextNode(span.textContent), span);
-    }
-  });
-  
-  // Normalize text nodes (merge adjacent text nodes)
-  if (markdownContent) {
-    markdownContent.normalize();
+  // Restore original HTML if we have highlights
+  if (searchResults.length > 0 && originalContentHTML && markdownContent) {
+    markdownContent.innerHTML = originalContentHTML;
   }
   
   searchResults = [];
@@ -826,6 +744,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     
+    // Store original HTML for search functionality
+    originalContentHTML = htmlContent;
+    
     // Add image error handling
     setupImageErrorHandling();
     
@@ -877,6 +798,9 @@ async function loadMarkdownFile(filePath) {
     // Display the parsed HTML
     markdownContent.innerHTML = htmlContent;
     currentFilePath = filePath;
+    
+    // Store original HTML for search functionality
+    originalContentHTML = htmlContent;
     
     // Add image error handling
     setupImageErrorHandling();
