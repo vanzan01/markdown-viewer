@@ -8,6 +8,14 @@ let currentMarkdownContent = '';
 let currentTitle = 'Untitled';
 let mermaidInitialized = false;
 
+// Find in page variables
+let searchDialog = null;
+let searchInput = null;
+let searchResults = [];
+let currentResultIndex = -1;
+let searchTerm = '';
+let isSearchDialogVisible = false;
+
 // DOM elements
 let openFileBtn;
 let fileInput;
@@ -15,6 +23,254 @@ let welcomeScreen;
 let markdownViewer;
 let markdownContent;
 let exportHtmlBtn;
+
+function createSearchDialog() {
+  if (searchDialog) return;
+  
+  // Create search dialog container
+  searchDialog = document.createElement('div');
+  searchDialog.className = 'search-dialog';
+  searchDialog.innerHTML = `
+    <div class="search-container">
+      <input type="text" class="search-input" placeholder="Find in page..." />
+      <div class="search-controls">
+        <button class="search-btn search-prev" title="Previous (Shift+Enter)">↑</button>
+        <button class="search-btn search-next" title="Next (Enter)">↓</button>
+        <span class="search-counter">0/0</span>
+        <button class="search-btn search-close" title="Close (Escape)">×</button>
+      </div>
+    </div>
+  `;
+  
+  // Append to body
+  document.body.appendChild(searchDialog);
+  
+  // Get references
+  searchInput = searchDialog.querySelector('.search-input');
+  const prevBtn = searchDialog.querySelector('.search-prev');
+  const nextBtn = searchDialog.querySelector('.search-next');
+  const closeBtn = searchDialog.querySelector('.search-close');
+  const counter = searchDialog.querySelector('.search-counter');
+  
+  // Event listeners
+  searchInput.addEventListener('input', handleSearchInput);
+  searchInput.addEventListener('keydown', handleSearchKeydown);
+  prevBtn.addEventListener('click', () => navigateResults(-1));
+  nextBtn.addEventListener('click', () => navigateResults(1));
+  closeBtn.addEventListener('click', hideSearchDialog);
+  
+  // Store counter reference for updates
+  searchDialog.counter = counter;
+}
+
+function showSearchDialog() {
+  if (!markdownContent || markdownContent.style.display === 'none') {
+    return; // Don't show search if no content is loaded
+  }
+  
+  createSearchDialog();
+  isSearchDialogVisible = true;
+  searchDialog.style.display = 'block';
+  searchInput.focus();
+  searchInput.select();
+}
+
+function hideSearchDialog() {
+  if (!searchDialog) return;
+  
+  isSearchDialogVisible = false;
+  searchDialog.style.display = 'none';
+  clearSearchResults();
+  searchInput.value = '';
+  searchTerm = '';
+}
+
+function handleSearchInput(event) {
+  const newSearchTerm = event.target.value.trim();
+  
+  if (newSearchTerm !== searchTerm) {
+    searchTerm = newSearchTerm;
+    if (searchTerm.length > 0) {
+      performSearch(searchTerm);
+    } else {
+      clearSearchResults();
+    }
+  }
+}
+
+function handleSearchKeydown(event) {
+  switch (event.key) {
+    case 'Enter':
+      event.preventDefault();
+      if (event.shiftKey) {
+        navigateResults(-1);
+      } else {
+        navigateResults(1);
+      }
+      break;
+    case 'Escape':
+      event.preventDefault();
+      hideSearchDialog();
+      break;
+  }
+}
+
+function performSearch(term) {
+  if (!term || !markdownContent) {
+    clearSearchResults();
+    return;
+  }
+  
+  // Clear previous results
+  clearSearchResults();
+  
+  // Get all text nodes in the content
+  const walker = document.createTreeWalker(
+    markdownContent,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        // Skip script and style elements
+        const parent = node.parentElement;
+        if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+  
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+  
+  // Search through text nodes
+  const regex = new RegExp(escapeRegex(term), 'gi');
+  
+  textNodes.forEach(textNode => {
+    const text = textNode.textContent;
+    const matches = [...text.matchAll(regex)];
+    
+    if (matches.length > 0) {
+      // Split the text node and wrap matches
+      let lastIndex = 0;
+      const parent = textNode.parentNode;
+      
+      matches.forEach(match => {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+        
+        // Insert text before match
+        if (matchStart > lastIndex) {
+          const beforeText = text.slice(lastIndex, matchStart);
+          parent.insertBefore(document.createTextNode(beforeText), textNode);
+        }
+        
+        // Create highlighted span for match
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'search-highlight';
+        highlightSpan.textContent = match[0];
+        highlightSpan.setAttribute('data-search-result', searchResults.length);
+        parent.insertBefore(highlightSpan, textNode);
+        
+        // Add to results array
+        searchResults.push(highlightSpan);
+        
+        lastIndex = matchEnd;
+      });
+      
+      // Insert remaining text after last match
+      if (lastIndex < text.length) {
+        const afterText = text.slice(lastIndex);
+        parent.insertBefore(document.createTextNode(afterText), textNode);
+      }
+      
+      // Remove original text node
+      parent.removeChild(textNode);
+    }
+  });
+  
+  // Update counter and navigate to first result
+  updateSearchCounter();
+  if (searchResults.length > 0) {
+    currentResultIndex = 0;
+    highlightCurrentResult();
+    scrollToCurrentResult();
+  }
+}
+
+function clearSearchResults() {
+  // Remove all highlight spans and restore original text
+  searchResults.forEach(span => {
+    const parent = span.parentNode;
+    if (parent) {
+      parent.replaceChild(document.createTextNode(span.textContent), span);
+    }
+  });
+  
+  // Normalize text nodes (merge adjacent text nodes)
+  if (markdownContent) {
+    markdownContent.normalize();
+  }
+  
+  searchResults = [];
+  currentResultIndex = -1;
+  updateSearchCounter();
+}
+
+function navigateResults(direction) {
+  if (searchResults.length === 0) return;
+  
+  // Clear current highlight
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    searchResults[currentResultIndex].classList.remove('search-highlight-current');
+  }
+  
+  // Calculate new index
+  currentResultIndex += direction;
+  if (currentResultIndex >= searchResults.length) {
+    currentResultIndex = 0;
+  } else if (currentResultIndex < 0) {
+    currentResultIndex = searchResults.length - 1;
+  }
+  
+  // Highlight current result
+  highlightCurrentResult();
+  scrollToCurrentResult();
+  updateSearchCounter();
+}
+
+function highlightCurrentResult() {
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    searchResults[currentResultIndex].classList.add('search-highlight-current');
+  }
+}
+
+function scrollToCurrentResult() {
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    const element = searchResults[currentResultIndex];
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}
+
+function updateSearchCounter() {
+  if (searchDialog && searchDialog.counter) {
+    if (searchResults.length > 0) {
+      searchDialog.counter.textContent = `${currentResultIndex + 1}/${searchResults.length}`;
+    } else {
+      searchDialog.counter.textContent = searchTerm ? '0/0' : '';
+    }
+  }
+}
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 async function openFile() {
   try {
@@ -515,6 +771,11 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
       currentFilePath = null;
     }
     
+    // Clear search if active
+    if (isSearchDialogVisible) {
+      hideSearchDialog();
+    }
+    
     // Show loading state
     markdownContent.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
     welcomeScreen.style.display = 'none';
@@ -559,6 +820,11 @@ async function loadMarkdownFile(filePath) {
     // Stop watching previous file
     if (currentFilePath) {
       await stopWatchingFile();
+    }
+    
+    // Clear search if active
+    if (isSearchDialogVisible) {
+      hideSearchDialog();
     }
     
     // Show loading state
@@ -1023,6 +1289,20 @@ window.addEventListener("DOMContentLoaded", async () => {
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
+  
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (event) => {
+    // Ctrl+F for find in page
+    if (event.ctrlKey && event.key === 'f') {
+      event.preventDefault();
+      showSearchDialog();
+    }
+    // Escape to close search dialog
+    else if (event.key === 'Escape' && isSearchDialogVisible) {
+      event.preventDefault();
+      hideSearchDialog();
+    }
+  });
   
   // Add manual drag and drop debugging
   const app = document.querySelector('.app');
