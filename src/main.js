@@ -8,6 +8,15 @@ let currentMarkdownContent = '';
 let currentTitle = 'Untitled';
 let mermaidInitialized = false;
 
+// Find in page variables
+let searchDialog = null;
+let searchInput = null;
+let searchResults = [];
+let currentResultIndex = -1;
+let searchTerm = '';
+let isSearchDialogVisible = false;
+let originalContentHTML = '';
+
 // DOM elements
 let openFileBtn;
 let fileInput;
@@ -15,6 +24,283 @@ let welcomeScreen;
 let markdownViewer;
 let markdownContent;
 let exportHtmlBtn;
+
+function createSearchDialog() {
+  if (searchDialog) return;
+  
+  // Create search dialog container
+  searchDialog = document.createElement('div');
+  searchDialog.className = 'search-dialog';
+  searchDialog.innerHTML = `
+    <div class="search-container">
+      <input type="text" class="search-input" placeholder="Find in page..." />
+      <div class="search-controls">
+        <button class="search-btn search-prev" title="Previous (Shift+Enter)">↑</button>
+        <button class="search-btn search-next" title="Next (Enter)">↓</button>
+        <span class="search-counter">0/0</span>
+        <button class="search-btn search-close" title="Close (Escape)">×</button>
+      </div>
+    </div>
+  `;
+  
+  // Append to body
+  document.body.appendChild(searchDialog);
+  
+  // Get references
+  searchInput = searchDialog.querySelector('.search-input');
+  const prevBtn = searchDialog.querySelector('.search-prev');
+  const nextBtn = searchDialog.querySelector('.search-next');
+  const closeBtn = searchDialog.querySelector('.search-close');
+  const counter = searchDialog.querySelector('.search-counter');
+  
+  // Event listeners
+  searchInput.addEventListener('input', handleSearchInput);
+  searchInput.addEventListener('keydown', handleSearchKeydown);
+  prevBtn.addEventListener('click', () => navigateResults(-1));
+  nextBtn.addEventListener('click', () => navigateResults(1));
+  closeBtn.addEventListener('click', hideSearchDialog);
+  
+  // Store counter reference for updates
+  searchDialog.counter = counter;
+}
+
+function showSearchDialog() {
+  if (!markdownContent || markdownContent.style.display === 'none') {
+    return; // Don't show search if no content is loaded
+  }
+  
+  createSearchDialog();
+  isSearchDialogVisible = true;
+  searchDialog.style.display = 'block';
+  searchInput.focus();
+  searchInput.select();
+}
+
+function hideSearchDialog() {
+  if (!searchDialog) return;
+  
+  isSearchDialogVisible = false;
+  searchDialog.style.display = 'none';
+  clearSearchResults();
+  searchInput.value = '';
+  searchTerm = '';
+}
+
+function handleSearchInput(event) {
+  const newSearchTerm = event.target.value.trim();
+  
+  if (newSearchTerm !== searchTerm) {
+    searchTerm = newSearchTerm;
+    if (searchTerm.length > 0) {
+      performSearch(searchTerm);
+    } else {
+      clearSearchResults();
+    }
+  }
+}
+
+function handleSearchKeydown(event) {
+  switch (event.key) {
+    case 'Enter':
+      event.preventDefault();
+      if (event.shiftKey) {
+        navigateResults(-1);
+      } else {
+        navigateResults(1);
+      }
+      break;
+    case 'Escape':
+      event.preventDefault();
+      hideSearchDialog();
+      break;
+  }
+}
+
+function performSearch(term) {
+  if (!term || !markdownContent) {
+    clearSearchResults();
+    return;
+  }
+  
+  // Clear previous results
+  clearSearchResults();
+  
+  // Store original HTML if not already stored
+  if (!originalContentHTML) {
+    originalContentHTML = markdownContent.innerHTML;
+  }
+  
+  // Use DOM-based approach that preserves Mermaid diagrams
+  const walker = document.createTreeWalker(
+    markdownContent,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        const parent = node.parentElement;
+        
+        // Skip script and style elements
+        if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip Mermaid diagram containers to preserve rendered SVGs
+        if (parent && (parent.classList.contains('mermaid-diagram-container') || 
+                       parent.closest('.mermaid-diagram-container'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip SVG elements (Mermaid renders as SVG)
+        if (parent && (parent.tagName === 'SVG' || parent.closest('svg'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip search highlight spans to avoid duplicate results
+        if (parent && (parent.classList.contains('search-highlight') || parent.classList.contains('search-highlight-current'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Only accept text nodes with actual content (not just whitespace)
+        if (!node.textContent || node.textContent.trim().length === 0) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+  
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+  
+  // Search through text nodes and create highlights
+  const regex = new RegExp(escapeRegex(term), 'gi');
+  
+  textNodes.forEach(textNode => {
+    const text = textNode.textContent;
+    const matches = [...text.matchAll(regex)];
+    
+    if (matches.length > 0) {
+      // Create document fragment to hold the new content
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      
+      matches.forEach(match => {
+        const matchStart = match.index;
+        const matchEnd = matchStart + match[0].length;
+        
+        // Add text before match
+        if (matchStart > lastIndex) {
+          const beforeText = text.slice(lastIndex, matchStart);
+          fragment.appendChild(document.createTextNode(beforeText));
+        }
+        
+        // Create highlighted span for match
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'search-highlight';
+        highlightSpan.textContent = match[0];
+        highlightSpan.setAttribute('data-search-result', searchResults.length);
+        fragment.appendChild(highlightSpan);
+        
+        // Add to results array
+        searchResults.push(highlightSpan);
+        
+        lastIndex = matchEnd;
+      });
+      
+      // Add remaining text after last match
+      if (lastIndex < text.length) {
+        const afterText = text.slice(lastIndex);
+        fragment.appendChild(document.createTextNode(afterText));
+      }
+      
+      // Replace the original text node with the fragment
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+  });
+  
+  // Update counter and navigate to first result
+  updateSearchCounter();
+  if (searchResults.length > 0) {
+    currentResultIndex = 0;
+    highlightCurrentResult();
+    scrollToCurrentResult();
+  }
+}
+
+function clearSearchResults() {
+  // Remove individual highlight spans without destroying Mermaid diagrams
+  searchResults.forEach(span => {
+    if (span && span.parentNode) {
+      // Replace the highlight span with its text content
+      const textNode = document.createTextNode(span.textContent);
+      span.parentNode.replaceChild(textNode, span);
+    }
+  });
+  
+  // Normalize text nodes to merge adjacent text nodes
+  if (markdownContent) {
+    markdownContent.normalize();
+  }
+  
+  searchResults = [];
+  currentResultIndex = -1;
+  updateSearchCounter();
+}
+
+function navigateResults(direction) {
+  if (searchResults.length === 0) return;
+  
+  // Clear current highlight
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    searchResults[currentResultIndex].classList.remove('search-highlight-current');
+  }
+  
+  // Calculate new index
+  currentResultIndex += direction;
+  if (currentResultIndex >= searchResults.length) {
+    currentResultIndex = 0;
+  } else if (currentResultIndex < 0) {
+    currentResultIndex = searchResults.length - 1;
+  }
+  
+  // Highlight current result
+  highlightCurrentResult();
+  scrollToCurrentResult();
+  updateSearchCounter();
+}
+
+function highlightCurrentResult() {
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    searchResults[currentResultIndex].classList.add('search-highlight-current');
+  }
+}
+
+function scrollToCurrentResult() {
+  if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+    const element = searchResults[currentResultIndex];
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}
+
+function updateSearchCounter() {
+  if (searchDialog && searchDialog.counter) {
+    if (searchResults.length > 0) {
+      searchDialog.counter.textContent = `${currentResultIndex + 1}/${searchResults.length}`;
+    } else {
+      searchDialog.counter.textContent = searchTerm ? '0/0' : '';
+    }
+  }
+}
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 async function openFile() {
   try {
@@ -56,6 +342,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
 - ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
 - ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
@@ -106,7 +393,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ HTML export functionality
 - [x] ✅ Mermaid diagram support
 - [ ] 📋 Table of contents sidebar
-- [ ] 🔍 Find in page (Ctrl+F)
+- [x] 🔍 Find in page (Ctrl+F)
 - [ ] 🖨️ Print to PDF support
 - [ ] 🌙 Dark mode themes
 
@@ -414,6 +701,15 @@ Simply click "Export HTML" in the toolbar and choose where to save your file!
 3. **Auto-reload**: Edit files in your editor and see changes instantly
 4. **Export**: Click "Export HTML" to save as standalone HTML file
 
+### Find in Page
+- **Open search**: Press \`Ctrl+F\` to open the search dialog
+- **Search navigation**: 
+  - \`Enter\` - Navigate to next result
+  - \`Shift+Enter\` - Navigate to previous result
+  - Use ↑/↓ buttons in search dialog for navigation
+- **Close search**: Press \`Escape\` or click × button
+- **Features**: Real-time search with highlighting, result counter, smooth scrolling to matches
+
 ### Testing Syntax Highlighting
 - Create code blocks with \`\`\`language
 - Supported: js, ts, py, rs, html, css, sql, json, bash, and more
@@ -489,7 +785,7 @@ gantt
     section Advanced Features
     Mermaid Diagrams   :active, mermaid, after footnotes, 4d
     HTML Export        :done, export, after mermaid, 3d
-    Find in Page       :search, after export, 5d
+    Find in Page       :done, search, after export, 5d
     Print to PDF       :pdf, after search, 4d
 \`\`\`
 
@@ -515,6 +811,11 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
       currentFilePath = null;
     }
     
+    // Clear search if active
+    if (isSearchDialogVisible) {
+      hideSearchDialog();
+    }
+    
     // Show loading state
     markdownContent.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
     welcomeScreen.style.display = 'none';
@@ -535,6 +836,9 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     
     // Process Mermaid diagrams
     await processMermaidDiagrams();
+    
+    // Store original HTML for search functionality AFTER Mermaid processing
+    originalContentHTML = markdownContent.innerHTML;
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -561,6 +865,11 @@ async function loadMarkdownFile(filePath) {
       await stopWatchingFile();
     }
     
+    // Clear search if active
+    if (isSearchDialogVisible) {
+      hideSearchDialog();
+    }
+    
     // Show loading state
     markdownContent.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
     welcomeScreen.style.display = 'none';
@@ -582,6 +891,9 @@ async function loadMarkdownFile(filePath) {
     
     // Process Mermaid diagrams
     await processMermaidDiagrams();
+    
+    // Store original HTML for search functionality AFTER Mermaid processing
+    originalContentHTML = markdownContent.innerHTML;
     
     // Show export button
     exportHtmlBtn.style.display = 'inline-block';
@@ -1023,6 +1335,20 @@ window.addEventListener("DOMContentLoaded", async () => {
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', exportHtml);
+  
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (event) => {
+    // Ctrl+F for find in page
+    if (event.ctrlKey && event.key === 'f') {
+      event.preventDefault();
+      showSearchDialog();
+    }
+    // Escape to close search dialog
+    else if (event.key === 'Escape' && isSearchDialogVisible) {
+      event.preventDefault();
+      hideSearchDialog();
+    }
+  });
   
   // Add manual drag and drop debugging
   const app = document.querySelector('.app');

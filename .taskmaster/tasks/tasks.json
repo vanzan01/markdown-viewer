@@ -427,7 +427,7 @@
       "id": 11,
       "title": "Implement Find in Page",
       "description": "Add search feature to find text within the markdown file (Ctrl+F)",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],
@@ -441,7 +441,7 @@
           "description": "Develop the backend and frontend logic to enable custom search within the application.",
           "dependencies": [],
           "details": "Create APIs for search queries and integrate with frontend. Implement case-sensitive and whole word search options. Ensure performance meets <100ms requirement.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -451,7 +451,7 @@
             1
           ],
           "details": "Implement UI components that visually highlight search results. Add keyboard navigation controls (Enter/Shift+Enter) to move between matches. Ensure search dialog opens with Ctrl+F.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -462,7 +462,7 @@
             2
           ],
           "details": "Implement browser-like search dialog with keyboard shortcuts for opening and navigation. Follow UI_UX_GUIDE.md patterns.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
