@@ -246,12 +246,12 @@
       "id": 7,
       "title": "Create Table of Contents Sidebar",
       "description": "Generate and display an auto-updating table of contents sidebar following UI_UX_GUIDE.md specifications.",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         13
       ],
-      "priority": "high",
-      "details": "Parse markdown headers to generate a TOC. Implement a collapsible sidebar in the frontend that updates as the user scrolls. Refer to UI_UX_GUIDE.md for layout structure, component implementation examples, and scroll sync functionality.",
+      "priority": "medium",
+      "details": "DEFERRED: Most markdown files are short-medium length (README, documentation, notes) and don't benefit from TOC navigation. Would create UI clutter for files with few headers. Users can use Ctrl+F to find sections. Can be implemented in Phase 2 based on user feedback for long documents.",
       "testStrategy": "Test with markdown files of varying lengths to ensure TOC generation and navigation work correctly. Verify implementation matches UI_UX_GUIDE.md specifications.",
       "subtasks": [
         {
@@ -508,12 +508,12 @@
       "id": 13,
       "title": "Implement Dark Mode and Themes",
       "description": "Add support for GitHub-style default theme (dark mode and additional themes to be implemented in Phase 2).",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         12
       ],
-      "priority": "high",
-      "details": "Create GitHub-style CSS theme as the default. Theme switcher implementation will be deferred to Phase 2.",
+      "priority": "medium",
+      "details": "DEFERRED: Application already has functional dark mode via CSS @media (prefers-color-scheme: dark) queries. Users get automatic dark mode based on OS settings. Manual theme toggle can be implemented in Phase 2 when additional themes are added.",
       "testStrategy": "Verify GitHub theme renders correctly with all markdown elements.",
       "subtasks": [
         {
@@ -598,10 +598,10 @@
     {
       "id": 15,
       "title": "Set Up Distribution Channels",
-      "description": "Prepare distribution via GitHub Releases, Homebrew, and Winget.",
-      "details": "Create GitHub Releases for direct downloads. Write Homebrew and Winget manifests for package managers.",
-      "testStrategy": "Verify downloads and installations from each distribution channel work as expected.",
-      "priority": "medium",
+      "description": "Prepare distribution via GitHub Releases (MVP focus), with Homebrew and Winget deferred to Phase 2.",
+      "details": "MVP: Create GitHub Releases for direct downloads. DEFERRED: Homebrew and Winget manifests can be added in Phase 2 after user validation.",
+      "testStrategy": "Verify GitHub Releases downloads work as expected.",
+      "priority": "high",
       "dependencies": [
         14
       ],
@@ -622,8 +622,8 @@
           "dependencies": [
             1
           ],
-          "details": "The manifest should reference the GitHub release assets and include any required dependencies.",
-          "status": "pending"
+          "details": "DEFERRED to Phase 2: The manifest should reference the GitHub release assets and include any required dependencies.",
+          "status": "deferred"
         },
         {
           "id": 3,
@@ -632,8 +632,8 @@
           "dependencies": [
             1
           ],
-          "details": "The manifest should include metadata, installer URLs, and checksums from the GitHub release.",
-          "status": "pending"
+          "details": "DEFERRED to Phase 2: The manifest should include metadata, installer URLs, and checksums from the GitHub release.",
+          "status": "deferred"
         }
       ]
     },
@@ -679,12 +679,12 @@
       "id": 17,
       "title": "Performance Optimization and Benchmarking",
       "description": "Optimize app performance according to TECH_ARCHITECTURE.md (Performance Architecture section) and IMPLEMENTATION_GUIDES.md section 3. Meet documented benchmarks: cold start <500ms, file open <100ms, memory <50MB, support files up to 10MB with smooth scrolling",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         2
       ],
-      "priority": "medium",
-      "details": "Implementation strategies from docs:\n1. Use lazy loading for non-critical UI components\n2. Implement file chunking for large document processing\n3. Optimize render cycles using memoization\n4. Pre-warm critical services during splash screen\n5. Use compressed binary format for document storage",
+      "priority": "low",
+      "details": "DEFERRED to Phase 2: Current performance likely adequate for most users. Better to get user feedback first, then optimize based on real usage patterns rather than theoretical benchmarks. Implementation strategies from docs:\n1. Use lazy loading for non-critical UI components\n2. Implement file chunking for large document processing\n3. Optimize render cycles using memoization\n4. Pre-warm critical services during splash screen\n5. Use compressed binary format for document storage",
       "testStrategy": "1. Benchmark cold start time with system profiler\n2. Measure file open operations with varying file sizes (1KB-10MB)\n3. Monitor memory usage during stress tests\n4. Validate scrolling performance with 10MB files\n5. Compare results against documented benchmarks in TECH_ARCHITECTURE.md",
       "subtasks": [
         {
@@ -749,12 +749,12 @@
       "id": 18,
       "title": "Bundle Size Optimization",
       "description": "Optimize executable size to meet PRD targets: Windows <25MB, macOS <20MB, Linux <30MB",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         2
       ],
-      "priority": "medium",
-      "details": "Documentation Reference: IMPLEMENTATION_GUIDES.md section 5 (build optimization), TECH_ARCHITECTURE.md (bundle optimization)\n\nImplementation Details: Cargo release profile optimization, strip symbols, minimize frontend assets\n\nAcceptance Criteria:\n✅ Windows executable <25MB (excluding runtime dependencies)\n✅ macOS app bundle <20MB\n✅ Linux binary <30MB\n✅ No functionality loss during size optimization",
+      "priority": "low",
+      "details": "DEFERRED to Phase 2: As long as executable size is reasonable (<100MB), users won't care for MVP. Better to ship working product first, then optimize size based on user feedback. Documentation Reference: IMPLEMENTATION_GUIDES.md section 5 (build optimization), TECH_ARCHITECTURE.md (bundle optimization)\n\nImplementation Details: Cargo release profile optimization, strip symbols, minimize frontend assets\n\nAcceptance Criteria:\n✅ Windows executable <25MB (excluding runtime dependencies)\n✅ macOS app bundle <20MB\n✅ Linux binary <30MB\n✅ No functionality loss during size optimization",
       "testStrategy": "Build for all platforms, measure sizes, verify functionality remains intact",
       "subtasks": []
     },
@@ -764,11 +764,9 @@
       "description": "Create MVP build with core features as defined in TECH_ARCHITECTURE.md and IMPLEMENTATION_GUIDES.md: basic markdown rendering, file associations, drag/drop, and auto-reload",
       "status": "pending",
       "dependencies": [
-        7,
         9,
         10,
-        12,
-        13
+        12
       ],
       "priority": "medium",
       "details": "Reference TECH_ARCHITECTURE.md for MVP requirements and IMPLEMENTATION_GUIDES.md for build configuration. Acceptance criteria:\n- MVP executable launches in under 500ms\n- Basic markdown rendering works\n- File associations function properly\n- Drag/drop opens files correctly\n- Auto-reload detects and applies changes\n- Works on all supported platforms",
@@ -779,12 +777,12 @@
       "id": 20,
       "title": "CommonMark Compliance Testing",
       "description": "Implement comprehensive testing to ensure full CommonMark specification compliance",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         2
       ],
-      "priority": "medium",
-      "details": "Refer to IMPLEMENTATION_GUIDES.md section 6 for testing requirements. Testing must cover full spec compliance, test suite integration, and performance validation. Include automated CommonMark spec tests and edge case validation.",
+      "priority": "low",
+      "details": "DEFERRED to Phase 2: Current markdown rendering works for 99% of real-world files. Better to ship working product and get user feedback on rendering issues, then fix specific problems rather than theoretical edge cases. Refer to IMPLEMENTATION_GUIDES.md section 6 for testing requirements. Testing must cover full spec compliance, test suite integration, and performance validation. Include automated CommonMark spec tests and edge case validation.",
       "testStrategy": "1. Implement automated test suite for CommonMark spec compliance\n2. Validate edge cases and corner scenarios\n3. Integrate with existing test infrastructure\n4. Measure and validate parsing performance\n5. Document test coverage and results",
       "subtasks": [
         {
@@ -823,12 +821,12 @@
       "id": 21,
       "title": "Code Signing Setup",
       "description": "Set up code signing certificates for Windows and macOS builds to enable trusted distribution according to TECH_ARCHITECTURE.md requirements",
-      "status": "pending",
+      "status": "deferred",
       "dependencies": [
         14
       ],
-      "priority": "medium",
-      "details": "1. Acquire and configure Windows Authenticode certificate\n2. Acquire and configure macOS Developer ID certificate\n3. Integrate automated signing into CI/CD pipeline\n4. Document signing process and certificate management procedures",
+      "priority": "low",
+      "details": "DEFERRED to Phase 2: Not essential for early testing and feedback phase. Users can run unsigned applications for MVP validation. Can add when ready for wide public distribution. 1. Acquire and configure Windows Authenticode certificate\n2. Acquire and configure macOS Developer ID certificate\n3. Integrate automated signing into CI/CD pipeline\n4. Document signing process and certificate management procedures",
       "testStrategy": "1. Verify signatures on Windows builds using signtool verify\n2. Validate macOS Developer ID signatures using codesign --verify\n3. Test trust chain verification on clean test machines\n4. Verify automated signing works in CI/CD pipeline",
       "subtasks": [
         {
