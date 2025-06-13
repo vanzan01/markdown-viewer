@@ -523,6 +523,20 @@ fn stop_watching_file(watcher_state: tauri::State<WatcherState>) -> Result<(), S
     Ok(())
 }
 
+#[tauri::command]
+fn read_file_content(file_path: String) -> Result<String, String> {
+    // Validate file path for security
+    let validated_path = validate_file_path(&file_path)?;
+    
+    match fs::read_to_string(&validated_path) {
+        Ok(content) => {
+            // Return raw content without processing for DOCX export
+            Ok(content)
+        },
+        Err(e) => Err(format!("Failed to read file: {}", e))
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let watcher_state: WatcherState = Arc::new(Mutex::new(None));
@@ -539,7 +553,8 @@ pub fn run() {
             get_launch_args,
             start_watching_file,
             stop_watching_file,
-            export_html
+            export_html,
+            read_file_content
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

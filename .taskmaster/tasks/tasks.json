@@ -248,9 +248,9 @@
       "description": "Generate and display an auto-updating table of contents sidebar following UI_UX_GUIDE.md specifications.",
       "status": "pending",
       "dependencies": [
-        2
+        13
       ],
-      "priority": "medium",
+      "priority": "high",
       "details": "Parse markdown headers to generate a TOC. Implement a collapsible sidebar in the frontend that updates as the user scrolls. Refer to UI_UX_GUIDE.md for layout structure, component implementation examples, and scroll sync functionality.",
       "testStrategy": "Test with markdown files of varying lengths to ensure TOC generation and navigation work correctly. Verify implementation matches UI_UX_GUIDE.md specifications.",
       "subtasks": [
@@ -332,7 +332,7 @@
       "id": 9,
       "title": "Implement Recent Files List",
       "description": "Maintain and display a list of recently opened markdown files",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         8
       ],
@@ -346,7 +346,7 @@
           "description": "Implement functionality to save recently accessed files in the browser's local storage.",
           "dependencies": [],
           "details": "Ensure the files are stored with relevant metadata (e.g., name, path, timestamp) and limit the number of stored files to a reasonable amount (e.g., last 10 files). Implement automatic cleanup of invalid/deleted files.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -356,7 +356,7 @@
             1
           ],
           "details": "The component should fetch and display the files from local storage, allow users to click on a file to open it, and update dynamically when new files are added. Follow UI patterns from UI_UX_GUIDE.md.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -366,7 +366,7 @@
             1
           ],
           "details": "When loading the recent files list, verify each file still exists and remove any invalid entries from local storage.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -374,11 +374,11 @@
       "id": 10,
       "title": "Add Zoom In/Out Functionality",
       "description": "Allow users to zoom in and out of the markdown content (50%-200% range)",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
-        2
+        9
       ],
-      "priority": "low",
+      "priority": "high",
       "details": "CSS transform scaling with keyboard shortcuts (Ctrl +/-), maintain performance during zoom. Documentation references: UI_UX_GUIDE.md (interaction patterns), TECH_ARCHITECTURE.md (performance requirements).",
       "testStrategy": "Test zoom functionality with various content types, verify performance with large files.",
       "subtasks": [
@@ -388,7 +388,7 @@
           "description": "Add UI controls to allow users to zoom in and out of the content.",
           "dependencies": [],
           "details": "Create zoom in and zoom out buttons or a slider. Ensure the controls are intuitive and responsive. Implement keyboard shortcuts (Ctrl +/-).",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -398,7 +398,7 @@
             1
           ],
           "details": "Use CSS transform scaling to adjust content. Ensure readability is maintained at all zoom levels and performance requirements are met.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -409,7 +409,7 @@
             2
           ],
           "details": "Store and retrieve zoom level from session storage for each file.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 4,
@@ -419,7 +419,7 @@
             2
           ],
           "details": "Test and optimize zoom operations, especially with large files.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -470,11 +470,11 @@
       "id": 12,
       "title": "Add Print to PDF and Export as HTML",
       "description": "Enable users to print markdown content as PDF, save it as HTML, or copy selected text with formatting preserved.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
-        2
+        10
       ],
-      "priority": "low",
+      "priority": "high",
       "details": "Use the browser's print functionality for PDF export. For HTML export, save the rendered HTML as a self-contained file. Add functionality to copy selected text with formatting.",
       "testStrategy": "Test printing, exporting, and formatted copy with various markdown files to ensure formatting is preserved in all cases.",
       "subtasks": [
@@ -484,7 +484,7 @@
           "description": "Leverage the browser's built-in print functionality to generate a PDF from the current webpage.",
           "dependencies": [],
           "details": "This involves calling the window.print() method and configuring the print dialog to save as PDF.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 2,
@@ -492,7 +492,7 @@
           "description": "Save the fully rendered HTML of the current webpage as a file on the local system.",
           "dependencies": [],
           "details": "This involves capturing the current DOM, converting it to a string, and using the File API or a download link to save it.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -500,7 +500,7 @@
           "description": "Implement functionality to copy selected text with formatting preserved.",
           "dependencies": [],
           "details": "This involves capturing the selected content with its HTML structure and using the Clipboard API to copy it with formatting.",
-          "status": "pending"
+          "status": "done"
         }
       ]
     },
@@ -510,9 +510,9 @@
       "description": "Add support for GitHub-style default theme (dark mode and additional themes to be implemented in Phase 2).",
       "status": "pending",
       "dependencies": [
-        2
+        12
       ],
-      "priority": "low",
+      "priority": "high",
       "details": "Create GitHub-style CSS theme as the default. Theme switcher implementation will be deferred to Phase 2.",
       "testStrategy": "Verify GitHub theme renders correctly with all markdown elements.",
       "subtasks": [
@@ -764,11 +764,13 @@
       "description": "Create MVP build with core features as defined in TECH_ARCHITECTURE.md and IMPLEMENTATION_GUIDES.md: basic markdown rendering, file associations, drag/drop, and auto-reload",
       "status": "pending",
       "dependencies": [
-        2,
-        8,
-        16
+        7,
+        9,
+        10,
+        12,
+        13
       ],
-      "priority": "high",
+      "priority": "medium",
       "details": "Reference TECH_ARCHITECTURE.md for MVP requirements and IMPLEMENTATION_GUIDES.md for build configuration. Acceptance criteria:\n- MVP executable launches in under 500ms\n- Basic markdown rendering works\n- File associations function properly\n- Drag/drop opens files correctly\n- Auto-reload detects and applies changes\n- Works on all supported platforms",
       "testStrategy": "End-to-end testing of core workflow including:\n- Performance testing (launch time)\n- Markdown rendering verification\n- File association validation\n- Drag/drop functionality check\n- Auto-reload behavior testing\n- Cross-platform compatibility verification",
       "subtasks": []

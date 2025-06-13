@@ -16,13 +16,33 @@
       }
     ],
     "security": {
+      "capabilities": [
+        {
+          "identifier": "main-capability",
+          "description": "Main application capabilities",
+          "local": true,
+          "windows": ["main"],
+          "permissions": [
+            "core:default",
+            "dialog:default",
+            "fs:default",
+            "fs:allow-download-write",
+            "fs:allow-download-write-recursive",
+            "fs:allow-document-write",
+            "fs:allow-document-write-recursive",
+            "fs:allow-desktop-write",
+            "fs:allow-desktop-write-recursive",
+            "opener:default"
+          ]
+        }
+      ],
       "csp": {
         "default-src": "'self' customprotocol: asset:",
-        "connect-src": "ipc: http://ipc.localhost",
+        "connect-src": "ipc: http://ipc.localhost https://esm.sh https://cdn.jsdelivr.net https://unpkg.com https://pandoc.org",
         "font-src": "'self' https://fonts.gstatic.com",
         "img-src": "'self' asset: http://asset.localhost blob: data: file: https://httpbin.org https://via.placeholder.com https://picsum.photos https://images.unsplash.com https://raw.githubusercontent.com",
         "style-src": "'unsafe-inline' 'self' https://fonts.googleapis.com",
-        "script-src": "'self' 'unsafe-inline' https://unpkg.com",
+        "script-src": "'self' 'unsafe-inline' https://unpkg.com https://esm.sh https://cdn.jsdelivr.net",
         "object-src": "'none'",
         "base-uri": "'self'",
         "form-action": "'none'",
