@@ -26,6 +26,12 @@
             "core:default",
             "dialog:default",
             "fs:default",
+            "fs:allow-download-write",
+            "fs:allow-download-write-recursive",
+            "fs:allow-document-write",
+            "fs:allow-document-write-recursive",
+            "fs:allow-desktop-write",
+            "fs:allow-desktop-write-recursive",
             "opener:default"
           ]
         }
