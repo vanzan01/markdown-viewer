@@ -138,9 +138,19 @@
             <button id="zoom-in-btn" class="btn btn-secondary zoom-btn" title="Zoom In (Ctrl++)">+</button>
             <button id="zoom-reset-btn" class="btn btn-secondary zoom-btn" title="Reset Zoom">⌂</button>
           </div>
-          <button id="export-html-btn" class="btn btn-secondary" style="display: none;">Export HTML</button>
-          <button id="export-docx-btn" class="btn btn-secondary" style="display: none;">Export DOCX</button>
-          <button id="print-pdf-btn" class="btn btn-secondary" style="display: none;" title="Print to PDF">Print PDF</button>
+          <div class="split-button" id="export-button-group" style="display: none;">
+            <button id="export-main-btn" class="btn btn-secondary split-btn-main">Export</button>
+            <button id="export-dropdown-btn" class="btn btn-secondary split-btn-dropdown" title="Export Options">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2 4l4 4 4-4z"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="export-dropdown-menu">
+              <button class="dropdown-item" id="export-html-btn">Export as HTML</button>
+              <button class="dropdown-item" id="export-docx-btn">Export as DOCX</button>
+              <button class="dropdown-item" id="print-pdf-btn">Print to PDF</button>
+            </div>
+          </div>
         </div>
       </header>
       

@@ -175,6 +175,10 @@ let markdownContent;
 let exportHtmlBtn;
 let exportDocxBtn;
 let printPdfBtn;
+let exportButtonGroup;
+let exportDropdownBtn;
+let exportDropdownMenu;
+let isExportDropdownVisible = false;
 
 function createSearchDialog() {
   if (searchDialog) return;
@@ -458,6 +462,25 @@ function updateSearchCounter() {
 
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Export dropdown functions
+function toggleExportDropdown() {
+  if (isExportDropdownVisible) {
+    hideExportDropdown();
+  } else {
+    showExportDropdown();
+  }
+}
+
+function showExportDropdown() {
+  isExportDropdownVisible = true;
+  exportDropdownMenu.classList.add('show');
+}
+
+function hideExportDropdown() {
+  isExportDropdownVisible = false;
+  exportDropdownMenu.classList.remove('show');
 }
 
 // Recent files UI functions
@@ -1211,10 +1234,8 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Store original HTML for search functionality AFTER Mermaid processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export buttons
-    exportHtmlBtn.style.display = 'inline-block';
-    exportDocxBtn.style.display = 'inline-block';
-    printPdfBtn.style.display = 'inline-block';
+    // Show export button group
+    exportButtonGroup.style.display = 'inline-flex';
     
     // Show zoom controls
     showZoomControls();
@@ -1275,10 +1296,8 @@ async function loadMarkdownFile(filePath) {
     // Store original HTML for search functionality AFTER Mermaid processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export buttons
-    exportHtmlBtn.style.display = 'inline-block';
-    exportDocxBtn.style.display = 'inline-block';
-    printPdfBtn.style.display = 'inline-block';
+    // Show export button group
+    exportButtonGroup.style.display = 'inline-flex';
     
     // Show zoom controls
     showZoomControls();
@@ -2075,14 +2094,44 @@ window.addEventListener("DOMContentLoaded", async () => {
   exportHtmlBtn = document.querySelector('#export-html-btn');
   exportDocxBtn = document.querySelector('#export-docx-btn');
   printPdfBtn = document.querySelector('#print-pdf-btn');
+  exportButtonGroup = document.querySelector('#export-button-group');
+  exportDropdownBtn = document.querySelector('#export-dropdown-btn');
+  exportDropdownMenu = document.querySelector('#export-dropdown-menu');
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
-  exportHtmlBtn.addEventListener('click', exportHtml);
-  exportDocxBtn.addEventListener('click', exportDocx);
-  printPdfBtn.addEventListener('click', printToPdf);
+  exportHtmlBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    exportHtml();
+  });
+  exportDocxBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    exportDocx();
+  });
+  printPdfBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    printToPdf();
+  });
+  
+  // Export dropdown functionality
+  exportDropdownBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleExportDropdown();
+  });
+  document.querySelector('#export-main-btn').addEventListener('click', () => {
+    // Default export action - export as HTML
+    exportHtml();
+  });
+  
+  // Click outside to close export dropdown
+  document.addEventListener('click', (event) => {
+    if (isExportDropdownVisible && 
+        !exportButtonGroup.contains(event.target)) {
+      hideExportDropdown();
+    }
+  });
   
   // Zoom control event listeners
   document.querySelector('#zoom-in-btn').addEventListener('click', zoomIn);
