@@ -10,6 +10,10 @@
     "@tauri-apps/cli": "^2"
   },
   "dependencies": {
-    "dompurify": "^3.2.6"
+    "@m2d/remark-docx": "^0.1.0",
+    "dompurify": "^3.2.6",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
   }
 }

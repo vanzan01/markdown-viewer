@@ -1277,6 +1277,7 @@ async function loadMarkdownFile(filePath) {
     
     // Show export buttons
     exportHtmlBtn.style.display = 'inline-block';
+    exportDocxBtn.style.display = 'inline-block';
     printPdfBtn.style.display = 'inline-block';
     
     // Show zoom controls
