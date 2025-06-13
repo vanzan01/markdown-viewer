@@ -67,91 +67,170 @@
   gap: 0.5rem;
 }
 
+/* Modern Button System */
 .btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
+  /* Base button styling */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  
+  /* Typography */
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: background-color 0.2s;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  
+  /* Layout */
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  outline: none;
+  
+  /* Transitions */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Primary style (default) */
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .btn:hover {
-  background: #0056b3;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 4px 12px 0 rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
 }
 
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Secondary Button - Modern Outline Style */
 .btn-secondary {
-  background: #6c757d;
+  background: white;
+  color: #374151;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .btn-secondary:hover {
-  background: #545b62;
+  background: #f9fafb;
+  border-color: #9ca3af;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
+.btn-secondary:active {
+  background: #f3f4f6;
+  transform: translateY(0);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
+}
+
+/* Large Button Variant */
 .btn-large {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
+  border-radius: 0.625rem;
   margin: 0.5rem;
+  font-weight: 600;
 }
 
-/* Split Button */
+/* Ghost Button Variant */
+.btn-ghost {
+  background: transparent;
+  color: #6b7280;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  background: #f3f4f6;
+  color: #374151;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Small Button Variant */
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: 0.375rem;
+}
+
+/* Modern Split Button */
 .split-button {
   display: inline-flex;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 0.375rem;
-  overflow: visible; /* Allow dropdown to show outside button bounds */
+  border-radius: 0.5rem;
+  overflow: visible;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .split-btn-main {
-  border-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   border-right: none;
   position: relative;
+  z-index: 1;
 }
 
 .split-btn-dropdown {
-  border-radius: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
   padding: 0.5rem 0.5rem;
   min-width: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #007bff;
+  position: relative;
+  z-index: 1;
 }
 
-.split-btn-dropdown.btn-secondary {
-  background: #6c757d;
+/* Primary split button styling */
+.split-btn-dropdown:not(.btn-secondary) {
   border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Secondary split button styling */
+.split-btn-dropdown.btn-secondary {
+  border-left: 1px solid #d1d5db;
 }
 
 .split-btn-dropdown.btn-secondary:hover {
-  background: #545b62;
+  border-left-color: #9ca3af;
 }
 
 .split-btn-dropdown svg {
   width: 12px;
   height: 12px;
+  transition: transform 0.2s ease;
 }
 
+/* Split button hover states */
 .split-btn-main:hover {
-  background: #0056b3;
-  border-right: none;
+  z-index: 2;
 }
 
 .split-btn-dropdown:hover {
-  background: #0056b3;
+  z-index: 2;
 }
 
-.split-btn-main:focus,
-.split-btn-dropdown:focus {
-  outline: 2px solid #007bff;
-  outline-offset: 2px;
-  z-index: 1;
-  position: relative;
+.split-btn-dropdown:hover svg {
+  transform: translateY(1px);
 }
 
 /* Make sure the split button appears as one cohesive unit */
@@ -209,8 +288,62 @@
   border-bottom-right-radius: 0.375rem;
 }
 
-/* Dark mode dropdown styles */
+/* Dark mode styles */
 @media (prefers-color-scheme: dark) {
+  /* Dark mode button styles */
+  .btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  }
+  
+  .btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px 0 rgba(59, 130, 246, 0.3);
+  }
+  
+  .btn:focus-visible {
+    outline-color: #3b82f6;
+  }
+  
+  .btn-secondary {
+    background: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
+  }
+  
+  .btn-secondary:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  }
+  
+  .btn-secondary:active {
+    background: #374151;
+  }
+  
+  .btn-secondary:focus-visible {
+    outline-color: #6b7280;
+  }
+  
+  .btn-ghost {
+    color: #9ca3af;
+  }
+  
+  .btn-ghost:hover {
+    background: #374151;
+    color: #e5e7eb;
+  }
+  
+  /* Dark mode split button styles */
+  .split-btn-dropdown.btn-secondary {
+    border-left-color: #4b5563;
+  }
+  
+  .split-btn-dropdown.btn-secondary:hover {
+    border-left-color: #6b7280;
+  }
+  
+  /* Dark mode dropdown styles */
   .dropdown-menu {
     background: #1f2937;
     border-color: #374151;
@@ -935,63 +1068,119 @@
 .zoom-controls {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  border: 1px solid #e9ecef;
-  border-radius: 0.375rem;
+  gap: 0.125rem;
+  border-radius: 0.5rem;
   background: white;
+  border: 1px solid #d1d5db;
   padding: 0.125rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .zoom-btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  min-width: 2rem;
-  height: 2rem;
-  display: flex;
+  /* Use modern button styling with ghost variant as base */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.25rem;
+  
+  /* Typography */
+  font-family: inherit;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1;
+  
+  /* Layout */
+  padding: 0.375rem 0.5rem;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  
+  /* Transitions */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ghost button styling */
+  background: transparent;
+  color: #6b7280;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.zoom-btn:active:not(:disabled) {
+  background: #e5e7eb;
+  transform: none;
+}
+
+.zoom-btn:focus-visible {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
 }
 
 .zoom-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-  background: #f8f9fa;
+  background: transparent;
+  color: #9ca3af;
 }
 
 .zoom-btn:disabled:hover {
-  background: #f8f9fa;
+  background: transparent;
+  color: #9ca3af;
 }
 
 .zoom-level {
   font-size: 0.75rem;
-  color: #6c757d;
+  color: #6b7280;
   font-weight: 500;
   padding: 0 0.5rem;
   white-space: nowrap;
   min-width: 3rem;
   text-align: center;
+  line-height: 1.2;
 }
 
 /* Dark mode zoom controls */
 @media (prefers-color-scheme: dark) {
   .zoom-controls {
-    background: #2d3748;
-    border-color: #4a5568;
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .zoom-btn {
+    color: #9ca3af;
+  }
+
+  .zoom-btn:hover:not(:disabled) {
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .zoom-btn:active:not(:disabled) {
+    background: #4b5563;
+  }
+
+  .zoom-btn:focus-visible {
+    outline-color: #6b7280;
   }
 
   .zoom-btn:disabled {
-    background: #1a202c;
+    background: transparent;
     color: #4a5568;
   }
 
   .zoom-btn:disabled:hover {
-    background: #1a202c;
+    background: transparent;
+    color: #4a5568;
   }
 
   .zoom-level {
-    color: #a0aec0;
+    color: #9ca3af;
   }
 }
