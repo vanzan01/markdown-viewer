@@ -20,6 +20,7 @@ package-lock.json
 
 # Development tools
 .taskmaster/
+.claude/
 ai-docs/
 CLAUDE.md
 
