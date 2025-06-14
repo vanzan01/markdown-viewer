@@ -9,6 +9,10 @@
     <script src="https://unpkg.com/dompurify@3.2.6/dist/purify.min.js"></script>
     <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
     <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github.min.css" id="highlight-theme-light">
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" id="highlight-theme-dark" disabled>
+    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
     <script>
       // DOCX generation using the docx.js library
       window.generateDocxFromMarkdown = async function(markdownText, title) {
@@ -113,6 +117,61 @@
       window.docxReady = true;
       console.log('✅ DOCX generator loaded (docx.js)');
     </script>
+    <script>
+      // Initialize highlight.js for syntax highlighting
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs !== 'undefined') {
+          // Configure highlight.js
+          hljs.configure({
+            languages: ['javascript', 'typescript', 'python', 'rust', 'html', 'css', 'sql', 'json', 'bash', 'shell', 'yaml', 'xml', 'markdown', 'c', 'cpp', 'java', 'go', 'php', 'ruby', 'swift', 'kotlin']
+          });
+          
+          // Mark as ready
+          window.highlightJsReady = true;
+          console.log('✅ Highlight.js initialized successfully');
+          
+          // Function to highlight all code blocks
+          window.highlightCodeBlocks = function() {
+            if (typeof hljs !== 'undefined') {
+              // Find all code blocks that haven't been highlighted yet
+              const codeBlocks = document.querySelectorAll('pre code:not(.hljs)');
+              codeBlocks.forEach(block => {
+                try {
+                  hljs.highlightElement(block);
+                } catch (error) {
+                  console.warn('Error highlighting code block:', error);
+                }
+              });
+            }
+          };
+          
+          // Function to switch highlight.js theme based on color scheme
+          window.updateHighlightTheme = function() {
+            const lightTheme = document.getElementById('highlight-theme-light');
+            const darkTheme = document.getElementById('highlight-theme-dark');
+            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (isDarkMode) {
+              lightTheme.disabled = true;
+              darkTheme.disabled = false;
+            } else {
+              lightTheme.disabled = false;
+              darkTheme.disabled = true;
+            }
+          };
+          
+          // Initial theme setup
+          window.updateHighlightTheme();
+          
+          // Listen for color scheme changes
+          if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', window.updateHighlightTheme);
+          }
+        } else {
+          console.warn('⚠️ Highlight.js not available');
+        }
+      });
+    </script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script type="module" src="/main.js" defer></script>
   </head>
@@ -138,9 +197,19 @@
             <button id="zoom-in-btn" class="btn btn-secondary zoom-btn" title="Zoom In (Ctrl++)">+</button>
             <button id="zoom-reset-btn" class="btn btn-secondary zoom-btn" title="Reset Zoom">⌂</button>
           </div>
-          <button id="export-html-btn" class="btn btn-secondary" style="display: none;">Export HTML</button>
-          <button id="export-docx-btn" class="btn btn-secondary" style="display: none;">Export DOCX</button>
-          <button id="print-pdf-btn" class="btn btn-secondary" style="display: none;" title="Print to PDF">Print PDF</button>
+          <div class="split-button" id="export-button-group" style="display: none;">
+            <button id="export-main-btn" class="btn btn-secondary split-btn-main">Export</button>
+            <button id="export-dropdown-btn" class="btn btn-secondary split-btn-dropdown" title="Export Options">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2 4l4 4 4-4z"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="export-dropdown-menu">
+              <button class="dropdown-item" id="export-html-btn">Export as HTML</button>
+              <button class="dropdown-item" id="export-docx-btn">Export as DOCX</button>
+              <button class="dropdown-item" id="print-pdf-btn">Print to PDF</button>
+            </div>
+          </div>
         </div>
       </header>
       

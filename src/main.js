@@ -175,6 +175,10 @@ let markdownContent;
 let exportHtmlBtn;
 let exportDocxBtn;
 let printPdfBtn;
+let exportButtonGroup;
+let exportDropdownBtn;
+let exportDropdownMenu;
+let isExportDropdownVisible = false;
 
 function createSearchDialog() {
   if (searchDialog) return;
@@ -460,6 +464,25 @@ function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Export dropdown functions
+function toggleExportDropdown() {
+  if (isExportDropdownVisible) {
+    hideExportDropdown();
+  } else {
+    showExportDropdown();
+  }
+}
+
+function showExportDropdown() {
+  isExportDropdownVisible = true;
+  exportDropdownMenu.classList.add('show');
+}
+
+function hideExportDropdown() {
+  isExportDropdownVisible = false;
+  exportDropdownMenu.classList.remove('show');
+}
+
 // Recent files UI functions
 function createRecentFilesDropdown() {
   if (recentFilesDropdown) return;
@@ -705,12 +728,16 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Auto-Reload File Watching** - Live updates when files change
 - ✅ **Strikethrough** - ~~Cross out~~ text support
 - ✅ **Tables** - Full table rendering with GitHub styling
-- ✅ **Footnotes** - Reference-style footnotes[^1]
+- ✅ **Footnotes** - Reference-style footnotes
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
-- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
-- ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts
+- ✅ **Recent Files List** - Quick access to recently opened markdown files
+- ✅ **Zoom Controls** - Zoom in/out with mouse or keyboard shortcuts (Ctrl +/-)
 - ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
+- ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **DOCX Export** - Export as Word document with full formatting
+- ✅ **Print to PDF** - Print documents to PDF with optimized layout
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
@@ -759,10 +786,15 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ Strikethrough support
 - [x] ✅ Image rendering with enhanced styling
 - [x] ✅ HTML export functionality
-- [x] ✅ Mermaid diagram support
-- [ ] 📋 Table of contents sidebar
+- [x] ✅ Mermaid diagram support with consistent styling
+- [x] ✅ Recent files list functionality
+- [x] ✅ Zoom controls with keyboard shortcuts
 - [x] 🔍 Find in page (Ctrl+F)
-- [ ] 🖨️ Print to PDF support
+- [x] ✅ DOCX export functionality
+- [x] ✅ Print to PDF support
+- [x] ✅ Modern UI design system
+- [x] ✅ Optimized window sizing
+- [ ] 📋 Table of contents sidebar
 - [ ] 🌙 Dark mode themes
 
 ## 📊 Table Support
@@ -783,255 +815,37 @@ Our table rendering follows GitHub markdown styling:
 | Left text    | Center text    | Right text    |
 | More left    | More center    | More right    |
 
-## 💻 Syntax Highlighting Examples
+## 💻 Syntax Highlighting
 
-Our syntax highlighting supports 20+ programming languages with proper themes:
+Our syntax highlighting supports 20+ programming languages with color-coded themes that automatically adapt to light/dark mode:
 
-### JavaScript/TypeScript
+### Quick Examples
 \`\`\`javascript
-// Modern JavaScript with ES6+ features
-class MarkdownViewer {
-    constructor(container) {
-        this.container = container;
-        this.watchers = new Map();
-    }
-    
-    async loadFile(filePath) {
-        const content = await invoke('read_markdown_file', { filePath });
-        this.render(content);
-        this.watchFile(filePath);
-    }
-    
-    watchFile(filePath) {
-        // Auto-reload implementation
-        console.log(\`Watching: \${filePath}\`);
-    }
-}
-
-// Arrow functions and destructuring
+// JavaScript with colorized keywords, strings, and comments
 const viewer = new MarkdownViewer('#content');
-const { loadFile, watchFile } = viewer;
+viewer.loadFile('sample.md'); // String in green, comments in gray
 \`\`\`
 
-### Python
 \`\`\`python
-# Python with type hints and modern features
-from typing import List, Dict, Optional
-from pathlib import Path
-import asyncio
-
-class DocumentProcessor:
-    def __init__(self, base_path: Path):
-        self.base_path = base_path
-        self.cache: Dict[str, str] = {}
-    
-    async def process_markdown(self, file_path: str) -> Optional[str]:
-        """Process markdown file with syntax highlighting."""
-        try:
-            content = await self.read_file(file_path)
-            return self.highlight_syntax(content)
-        except FileNotFoundError:
-            print(f"File not found: {file_path}")
-            return None
-    
-    def highlight_syntax(self, content: str) -> str:
-        # Syntax highlighting logic
-        return f"<highlighted>{content}</highlighted>"
-
-# Example usage
-processor = DocumentProcessor(Path("./docs"))
-result = asyncio.run(processor.process_markdown("README.md"))
+# Python with highlighted syntax
+def process_markdown(file_path: str) -> str:
+    """Process markdown with syntax highlighting."""
+    return highlight_syntax(content)  # Function calls in blue
 \`\`\`
 
-### Rust (Our Backend Language)
 \`\`\`rust
-// Rust code demonstrating Tauri backend
-use tauri::{AppHandle, Emitter};
-use notify::{Watcher, RecommendedWatcher, RecursiveMode};
-use std::sync::{Arc, Mutex};
-
-type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
-
+// Rust backend code with proper highlighting
 #[tauri::command]
 async fn parse_markdown(content: &str) -> Result<String, String> {
-    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
-    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-    
-    // Parse markdown with syntax highlighting
-    let parser = pulldown_cmark::Parser::new_ext(content, options);
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-    
-    Ok(post_process_syntax_highlighting(&html_output))
-}
-
-#[tauri::command]
-fn start_watching_file(
-    file_path: String,
-    app_handle: AppHandle,
-    watcher_state: tauri::State<WatcherState>,
-) -> Result<(), String> {
-    // File watching implementation with notify crate
-    println!("Starting to watch: {}", file_path);
-    Ok(())
+    Ok(process_content(content))  // Keywords in purple
 }
 \`\`\`
 
-### HTML/CSS
-\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Viewer</title>
-    <style>
-        /* GitHub-style markdown CSS */
-        .markdown-body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial;
-            line-height: 1.6;
-            color: #24292e;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .syntax-highlight {
-            background: #f6f8fa;
-            border-radius: 6px;
-            padding: 16px;
-            overflow-x: auto;
-        }
-        
-        table {
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-        
-        td, th {
-            border: 1px solid #d0d7de;
-            padding: 6px 13px;
-        }
-    </style>
-</head>
-<body class="markdown-body">
-    <div id="content"></div>
-</body>
-</html>
-\`\`\`
-
-### SQL
-\`\`\`sql
--- Complex SQL query with CTEs and window functions
-WITH monthly_sales AS (
-    SELECT 
-        DATE_TRUNC('month', order_date) as month,
-        customer_id,
-        SUM(amount) as monthly_total,
-        COUNT(*) as order_count
-    FROM orders 
-    WHERE order_date >= '2024-01-01'
-    GROUP BY 1, 2
-),
-customer_rankings AS (
-    SELECT 
-        customer_id,
-        month,
-        monthly_total,
-        ROW_NUMBER() OVER (PARTITION BY month ORDER BY monthly_total DESC) as rank,
-        LAG(monthly_total) OVER (PARTITION BY customer_id ORDER BY month) as prev_month
-    FROM monthly_sales
-)
-SELECT 
-    c.customer_name,
-    cr.month,
-    cr.monthly_total,
-    cr.rank,
-    CASE 
-        WHEN cr.prev_month IS NULL THEN 'New Customer'
-        WHEN cr.monthly_total > cr.prev_month THEN 'Growing'
-        ELSE 'Declining'
-    END as trend
-FROM customer_rankings cr
-JOIN customers c ON cr.customer_id = c.id
-WHERE cr.rank <= 10
-ORDER BY cr.month, cr.rank;
-\`\`\`
-
-### JSON Configuration
-\`\`\`json
-{
-  "name": "markdown-viewer",
-  "version": "0.1.0",
-  "description": "A Tauri-based markdown viewer with syntax highlighting",
-  "dependencies": {
-    "pulldown-cmark": "0.9",
-    "syntect": "5.0",
-    "notify": "6.0",
-    "tauri": "2.0"
-  },
-  "features": {
-    "syntax_highlighting": true,
-    "file_watching": true,
-    "drag_drop": true,
-    "file_associations": true,
-    "tables": true,
-    "footnotes": true,
-    "strikethrough": true
-  },
-  "supported_languages": [
-    "javascript", "typescript", "python", "rust", "html", "css", 
-    "sql", "json", "yaml", "bash", "markdown", "c", "cpp", "java",
-    "go", "php", "ruby", "swift", "kotlin", "scala", "haskell"
-  ]
-}
-\`\`\`
-
-### Shell/Bash
-\`\`\`bash
-#!/bin/bash
-# Build script for Markdown Viewer
-
-set -e  # Exit on any error
-
-echo "🚀 Building Markdown Viewer..."
-
-# Check if Rust is installed
-if ! command -v cargo &> /dev/null; then
-    echo "❌ Rust is not installed. Please install Rust first."
-    exit 1
-fi
-
-# Check if Node.js is installed  
-if ! command -v npm &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js first."
-    exit 1
-fi
-
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm install
-
-# Build the application
-echo "🔨 Building application..."
-npm run tauri build
-
-echo "✅ Build complete! Check the 'src-tauri/target/release/bundle' directory."
-
-# Optional: Create distribution package
-if [ "$1" = "--package" ]; then
-    echo "📦 Creating distribution package..."
-    mkdir -p dist
-    cp -r src-tauri/target/release/bundle/* dist/
-    echo "✅ Distribution package created in 'dist/' directory."
-fi
-\`\`\`
+**Supported Languages**: JavaScript, TypeScript, Python, Rust, HTML, CSS, SQL, JSON, Bash, YAML, C/C++, Java, Go, PHP, Ruby, Swift, Kotlin, and more!
 
 ## 📝 Footnotes and References
 
-This markdown viewer supports footnotes[^1] and multiple reference styles[^note].
-
-You can reference the same footnote multiple times[^1] throughout your document.
+This markdown viewer supports footnotes and multiple reference styles for citations and additional information.
 
 ## 🖼️ Image Rendering
 
@@ -1053,21 +867,43 @@ Our enhanced image rendering supports both local and remote images:
 
 ## 📤 Export Functionality
 
-The **Export HTML** button (visible when viewing content) allows you to:
+The **Export dropdown** (visible when viewing content) provides multiple export options:
+
+### HTML Export
 - Generate standalone HTML files with embedded CSS
 - Preserve all formatting, syntax highlighting, and styling
 - Include images and tables in the exported document
 - Create files that work offline without external dependencies
 
-Simply click "Export HTML" in the toolbar and choose where to save your file!
+### DOCX Export
+- Export as Microsoft Word document (.docx)
+- Maintain document structure with headings, lists, and formatting
+- Preserve text styling (bold, italic, code blocks)
+- Compatible with Microsoft Word and other office suites
+
+### Print to PDF
+- Print documents directly to PDF format
+- Optimized layout with proper page breaks
+- Clean formatting without UI elements
+- Perfect for sharing and archiving
+
+Simply click the "Export" dropdown in the toolbar and choose your preferred format!
 
 ## 🚀 How to Use All Features
 
 ### File Operations
 1. **Open files**: Drag & drop .md files into the window
 2. **File associations**: Double-click .md files in your file manager
-3. **Auto-reload**: Edit files in your editor and see changes instantly
-4. **Export**: Click "Export HTML" to save as standalone HTML file
+3. **Recent files**: Click the dropdown arrow next to "Open File" for quick access
+4. **Auto-reload**: Edit files in your editor and see changes instantly
+5. **Export**: Use the Export dropdown for HTML, DOCX, or PDF formats
+
+### Zoom and View Controls
+- **Zoom in**: Press \`Ctrl++\` or click the + button
+- **Zoom out**: Press \`Ctrl+-\` or click the - button  
+- **Reset zoom**: Press \`Ctrl+0\` or click the home button
+- **Zoom range**: 50% to 200% with 10% increments
+- **Per-file memory**: Zoom level is remembered for each opened file
 
 ### Find in Page
 - **Open search**: Press \`Ctrl+F\` to open the search dialog
@@ -1151,18 +987,21 @@ gantt
     Image Support      :done, images, after tables, 3d
     Footnotes         :done, footnotes, after images, 2d
     section Advanced Features
-    Mermaid Diagrams   :active, mermaid, after footnotes, 4d
+    Mermaid Diagrams   :done, mermaid, after footnotes, 4d
     HTML Export        :done, export, after mermaid, 3d
     Find in Page       :done, search, after export, 5d
-    Print to PDF       :pdf, after search, 4d
+    Recent Files List  :done, recent, after search, 3d
+    section Export & UI
+    DOCX Export        :done, docx, after recent, 4d
+    Print to PDF       :done, pdf, after docx, 3d
+    Zoom Controls      :done, zoom, after pdf, 3d
+    Modern UI Design   :done, ui, after zoom, 4d
+    Window Optimization :done, window, after ui, 2d
 \`\`\`
 
 ---
 
-*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*
-
-[^1]: This is the first footnote with detailed explanation.
-[^note]: Another footnote showing multiple reference support.`;
+*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*`;
 
     // Store sample markdown for DOCX export
     window.sampleMarkdownContent = sampleMarkdown;
@@ -1208,13 +1047,14 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Process Mermaid diagrams
     await processMermaidDiagrams();
     
-    // Store original HTML for search functionality AFTER Mermaid processing
+    // Apply syntax highlighting to code blocks
+    await applySyntaxHighlighting();
+    
+    // Store original HTML for search functionality AFTER all processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export buttons
-    exportHtmlBtn.style.display = 'inline-block';
-    exportDocxBtn.style.display = 'inline-block';
-    printPdfBtn.style.display = 'inline-block';
+    // Show export button group
+    exportButtonGroup.style.display = 'inline-flex';
     
     // Show zoom controls
     showZoomControls();
@@ -1272,13 +1112,14 @@ async function loadMarkdownFile(filePath) {
     // Process Mermaid diagrams
     await processMermaidDiagrams();
     
-    // Store original HTML for search functionality AFTER Mermaid processing
+    // Apply syntax highlighting to code blocks
+    await applySyntaxHighlighting();
+    
+    // Store original HTML for search functionality AFTER all processing
     originalContentHTML = markdownContent.innerHTML;
     
-    // Show export buttons
-    exportHtmlBtn.style.display = 'inline-block';
-    exportDocxBtn.style.display = 'inline-block';
-    printPdfBtn.style.display = 'inline-block';
+    // Show export button group
+    exportButtonGroup.style.display = 'inline-flex';
     
     // Show zoom controls
     showZoomControls();
@@ -1537,7 +1378,15 @@ function initializeMermaid() {
         wrap: true
       },
       gantt: {
-        useMaxWidth: true
+        useMaxWidth: true,
+        fontSize: 12,
+        sectionFontSize: 13,
+        barHeight: 24,
+        barGap: 6,
+        leftPadding: 100,
+        rightPadding: 100,
+        topPadding: 50,
+        titleTopMargin: 25
       }
     });
     mermaidInitialized = true;
@@ -1611,6 +1460,44 @@ async function processMermaidDiagrams() {
     
   } catch (error) {
     console.error('❌ Error processing Mermaid diagrams:', error);
+  }
+}
+
+async function applySyntaxHighlighting() {
+  if (!window.highlightJsReady || typeof hljs === 'undefined') {
+    console.log('⚠️ Highlight.js not ready, skipping syntax highlighting');
+    return;
+  }
+  
+  try {
+    console.log('🎨 Applying syntax highlighting...');
+    
+    // Find all code blocks that haven't been highlighted yet
+    const codeBlocks = markdownContent.querySelectorAll('pre code:not(.hljs)');
+    console.log(`Found ${codeBlocks.length} code block(s) to highlight`);
+    
+    let highlightedCount = 0;
+    codeBlocks.forEach(block => {
+      try {
+        // Skip if this is inside a Mermaid diagram container
+        if (block.closest('.mermaid-diagram-container')) {
+          return;
+        }
+        
+        // Apply syntax highlighting
+        hljs.highlightElement(block);
+        highlightedCount++;
+        
+        console.log(`✅ Highlighted code block: ${block.className || 'auto-detected'}`);
+      } catch (error) {
+        console.warn('⚠️ Error highlighting code block:', error, block);
+      }
+    });
+    
+    console.log(`✅ Applied syntax highlighting to ${highlightedCount} code block(s)`);
+    
+  } catch (error) {
+    console.error('❌ Error applying syntax highlighting:', error);
   }
 }
 
@@ -2065,6 +1952,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log('window.docxReady:', window.docxReady);
   console.log('window.generateDocxFromMarkdown:', typeof window.generateDocxFromMarkdown !== 'undefined');
   console.log('docx library:', typeof docx !== 'undefined');
+  console.log('highlight.js:', typeof hljs !== 'undefined');
+  console.log('window.highlightJsReady:', window.highlightJsReady);
   
   // Get DOM elements
   openFileBtn = document.querySelector('#open-file-btn');
@@ -2075,14 +1964,44 @@ window.addEventListener("DOMContentLoaded", async () => {
   exportHtmlBtn = document.querySelector('#export-html-btn');
   exportDocxBtn = document.querySelector('#export-docx-btn');
   printPdfBtn = document.querySelector('#print-pdf-btn');
+  exportButtonGroup = document.querySelector('#export-button-group');
+  exportDropdownBtn = document.querySelector('#export-dropdown-btn');
+  exportDropdownMenu = document.querySelector('#export-dropdown-menu');
 
   // Setup event listeners
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
-  exportHtmlBtn.addEventListener('click', exportHtml);
-  exportDocxBtn.addEventListener('click', exportDocx);
-  printPdfBtn.addEventListener('click', printToPdf);
+  exportHtmlBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    exportHtml();
+  });
+  exportDocxBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    exportDocx();
+  });
+  printPdfBtn.addEventListener('click', () => {
+    hideExportDropdown();
+    printToPdf();
+  });
+  
+  // Export dropdown functionality
+  exportDropdownBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleExportDropdown();
+  });
+  document.querySelector('#export-main-btn').addEventListener('click', () => {
+    // Default export action - export as HTML
+    exportHtml();
+  });
+  
+  // Click outside to close export dropdown
+  document.addEventListener('click', (event) => {
+    if (isExportDropdownVisible && 
+        !exportButtonGroup.contains(event.target)) {
+      hideExportDropdown();
+    }
+  });
   
   // Zoom control event listeners
   document.querySelector('#zoom-in-btn').addEventListener('click', zoomIn);
