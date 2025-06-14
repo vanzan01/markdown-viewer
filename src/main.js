@@ -845,8 +845,6 @@ async fn parse_markdown(content: &str) -> Result<String, String> {
 
 **Supported Languages**: JavaScript, TypeScript, Python, Rust, HTML, CSS, SQL, JSON, Bash, YAML, C/C++, Java, Go, PHP, Ruby, Swift, Kotlin, and more!
 
-*For detailed code examples showcasing all languages, see the [Extended Code Examples](#extended-code-examples) section at the bottom.*
-
 ## 📝 Footnotes and References
 
 This markdown viewer supports footnotes[^1] and multiple reference styles[^note].
@@ -1003,113 +1001,6 @@ gantt
     Zoom Controls      :done, zoom, after pdf, 3d
     Modern UI Design   :done, ui, after zoom, 4d
     Window Optimization :done, window, after ui, 2d
-\`\`\`
-
-## Extended Code Examples
-
-*This section contains detailed syntax highlighting examples for various programming languages. These examples demonstrate the full capabilities of our color-coded syntax highlighting system.*
-
-### JavaScript/TypeScript
-\`\`\`javascript
-// Modern JavaScript with ES6+ features
-class MarkdownViewer {
-    constructor(container) {
-        this.container = container;
-        this.watchers = new Map();
-    }
-    
-    async loadFile(filePath) {
-        const content = await invoke('read_markdown_file', { filePath });
-        this.render(content);
-    }
-}
-
-const viewer = new MarkdownViewer('#content');
-\`\`\`
-
-### Python
-\`\`\`python
-from typing import List, Dict, Optional
-from pathlib import Path
-
-class DocumentProcessor:
-    def __init__(self, base_path: Path):
-        self.base_path = base_path
-        self.cache: Dict[str, str] = {}
-    
-    async def process_markdown(self, file_path: str) -> Optional[str]:
-        """Process markdown file with syntax highlighting."""
-        try:
-            content = await self.read_file(file_path)
-            return self.highlight_syntax(content)
-        except FileNotFoundError:
-            print(f"File not found: {file_path}")
-            return None
-\`\`\`
-
-### Rust
-\`\`\`rust
-use tauri::{AppHandle, Emitter};
-use std::sync::{Arc, Mutex};
-
-#[tauri::command]
-async fn parse_markdown(content: &str) -> Result<String, String> {
-    let parser = pulldown_cmark::Parser::new_ext(content, options);
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-    Ok(post_process_syntax_highlighting(&html_output))
-}
-\`\`\`
-
-### SQL
-\`\`\`sql
--- Complex query with CTEs and window functions
-WITH monthly_sales AS (
-    SELECT 
-        DATE_TRUNC('month', order_date) as month,
-        customer_id,
-        SUM(amount) as monthly_total
-    FROM orders 
-    WHERE order_date >= '2024-01-01'
-    GROUP BY 1, 2
-)
-SELECT 
-    c.customer_name,
-    cr.monthly_total,
-    ROW_NUMBER() OVER (ORDER BY monthly_total DESC) as rank
-FROM monthly_sales cr
-JOIN customers c ON cr.customer_id = c.id;
-\`\`\`
-
-### JSON
-\`\`\`json
-{
-  "name": "markdown-viewer",
-  "version": "0.1.0",
-  "features": {
-    "syntax_highlighting": true,
-    "file_watching": true,
-    "mermaid_diagrams": true
-  },
-  "supported_languages": ["javascript", "python", "rust", "sql", "json"]
-}
-\`\`\`
-
-### Bash
-\`\`\`bash
-#!/bin/bash
-set -e
-
-echo "🚀 Building Markdown Viewer..."
-
-if ! command -v cargo &> /dev/null; then
-    echo "❌ Rust is not installed."
-    exit 1
-fi
-
-npm install
-npm run tauri build
-echo "✅ Build complete!"
 \`\`\`
 
 ---
