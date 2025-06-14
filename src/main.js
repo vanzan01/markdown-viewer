@@ -728,7 +728,7 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Auto-Reload File Watching** - Live updates when files change
 - ✅ **Strikethrough** - ~~Cross out~~ text support
 - ✅ **Tables** - Full table rendering with GitHub styling
-- ✅ **Footnotes** - Reference-style footnotes[^1]
+- ✅ **Footnotes** - Reference-style footnotes
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
 - ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts with consistent styling
@@ -847,9 +847,7 @@ async fn parse_markdown(content: &str) -> Result<String, String> {
 
 ## 📝 Footnotes and References
 
-This markdown viewer supports footnotes[^1] and multiple reference styles[^note].
-
-You can reference the same footnote multiple times[^1] throughout your document.
+This markdown viewer supports footnotes and multiple reference styles for citations and additional information.
 
 ## 🖼️ Image Rendering
 
@@ -1005,10 +1003,7 @@ gantt
 
 ---
 
-*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*
-
-[^1]: This is the first footnote with detailed explanation.
-[^note]: Another footnote showing multiple reference support.`;
+*This markdown viewer is built with Tauri (Rust) + Vanilla JavaScript, featuring real-time file watching, comprehensive markdown support, beautiful syntax highlighting, and interactive Mermaid diagrams.*`;
 
     // Store sample markdown for DOCX export
     window.sampleMarkdownContent = sampleMarkdown;
