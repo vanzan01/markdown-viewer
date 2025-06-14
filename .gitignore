@@ -34,8 +34,7 @@ test-*
 .env.production
 
 # Editor files
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea/
 *.suo
 *.ntvs*
