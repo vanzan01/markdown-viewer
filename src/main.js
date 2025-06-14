@@ -819,7 +819,7 @@ Our table rendering follows GitHub markdown styling:
 
 ## 💻 Syntax Highlighting Examples
 
-Our syntax highlighting supports 20+ programming languages with proper themes:
+Our syntax highlighting supports 20+ programming languages with color-coded themes that automatically adapt to light/dark mode:
 
 ### JavaScript/TypeScript
 \`\`\`javascript
@@ -1270,7 +1270,10 @@ async function loadMarkdownContent(markdownText, fileName = 'Sample') {
     // Process Mermaid diagrams
     await processMermaidDiagrams();
     
-    // Store original HTML for search functionality AFTER Mermaid processing
+    // Apply syntax highlighting to code blocks
+    await applySyntaxHighlighting();
+    
+    // Store original HTML for search functionality AFTER all processing
     originalContentHTML = markdownContent.innerHTML;
     
     // Show export button group
@@ -1332,7 +1335,10 @@ async function loadMarkdownFile(filePath) {
     // Process Mermaid diagrams
     await processMermaidDiagrams();
     
-    // Store original HTML for search functionality AFTER Mermaid processing
+    // Apply syntax highlighting to code blocks
+    await applySyntaxHighlighting();
+    
+    // Store original HTML for search functionality AFTER all processing
     originalContentHTML = markdownContent.innerHTML;
     
     // Show export button group
@@ -1677,6 +1683,44 @@ async function processMermaidDiagrams() {
     
   } catch (error) {
     console.error('❌ Error processing Mermaid diagrams:', error);
+  }
+}
+
+async function applySyntaxHighlighting() {
+  if (!window.highlightJsReady || typeof hljs === 'undefined') {
+    console.log('⚠️ Highlight.js not ready, skipping syntax highlighting');
+    return;
+  }
+  
+  try {
+    console.log('🎨 Applying syntax highlighting...');
+    
+    // Find all code blocks that haven't been highlighted yet
+    const codeBlocks = markdownContent.querySelectorAll('pre code:not(.hljs)');
+    console.log(`Found ${codeBlocks.length} code block(s) to highlight`);
+    
+    let highlightedCount = 0;
+    codeBlocks.forEach(block => {
+      try {
+        // Skip if this is inside a Mermaid diagram container
+        if (block.closest('.mermaid-diagram-container')) {
+          return;
+        }
+        
+        // Apply syntax highlighting
+        hljs.highlightElement(block);
+        highlightedCount++;
+        
+        console.log(`✅ Highlighted code block: ${block.className || 'auto-detected'}`);
+      } catch (error) {
+        console.warn('⚠️ Error highlighting code block:', error, block);
+      }
+    });
+    
+    console.log(`✅ Applied syntax highlighting to ${highlightedCount} code block(s)`);
+    
+  } catch (error) {
+    console.error('❌ Error applying syntax highlighting:', error);
   }
 }
 
@@ -2131,6 +2175,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   console.log('window.docxReady:', window.docxReady);
   console.log('window.generateDocxFromMarkdown:', typeof window.generateDocxFromMarkdown !== 'undefined');
   console.log('docx library:', typeof docx !== 'undefined');
+  console.log('highlight.js:', typeof hljs !== 'undefined');
+  console.log('window.highlightJsReady:', window.highlightJsReady);
   
   // Get DOM elements
   openFileBtn = document.querySelector('#open-file-btn');

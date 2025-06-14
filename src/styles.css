@@ -744,6 +744,33 @@
   fill: #1f2937 !important;
 }
 
+/* Syntax highlighting customization */
+.content pre code.hljs {
+  background: inherit !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.content pre {
+  background: #f8f9fa !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin: 1rem 0 !important;
+  border: 1px solid #e9ecef !important;
+}
+
+/* Ensure syntax highlighting works in dark mode */
+@media (prefers-color-scheme: dark) {
+  .content pre {
+    background: #2d3748 !important;
+    border-color: #4a5568 !important;
+  }
+}
+
 /* Mermaid error styling */
 .mermaid-error {
   border: 2px dashed #dc3545;
