@@ -2044,6 +2044,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   openFileBtn.addEventListener('click', openFile);
   document.querySelector('#recent-files-btn').addEventListener('click', showRecentFiles);
   document.querySelector('#sample-btn').addEventListener('click', openSampleFile);
+  
+  // Welcome screen button event listeners (secure alternative to inline onclick)
+  document.querySelector('#welcome-open-btn').addEventListener('click', openFile);
+  document.querySelector('#welcome-sample-btn').addEventListener('click', openSampleFile);
   exportHtmlBtn.addEventListener('click', () => {
     hideExportDropdown();
     exportHtml();
