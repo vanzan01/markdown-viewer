@@ -762,7 +762,7 @@
       "id": 19,
       "title": "Build MVP Version",
       "description": "Create MVP build with core features as defined in TECH_ARCHITECTURE.md and IMPLEMENTATION_GUIDES.md: basic markdown rendering, file associations, drag/drop, and auto-reload",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         9,
         10,
