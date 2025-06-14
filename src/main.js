@@ -731,9 +731,15 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Footnotes** - Reference-style footnotes[^1]
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
-- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts, and more
-- ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts with consistent styling
+- ✅ **Recent Files List** - Quick access to recently opened markdown files
+- ✅ **Zoom Controls** - Zoom in/out with mouse or keyboard shortcuts (Ctrl +/-)
 - ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
+- ✅ **HTML Export** - Export current document as standalone HTML
+- ✅ **DOCX Export** - Export as Word document with full formatting
+- ✅ **Print to PDF** - Print documents to PDF with optimized layout
+- ✅ **Modern UI Design** - Contemporary button system and responsive interface
+- ✅ **Optimized Window Sizing** - Better default dimensions for content viewing
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
@@ -782,10 +788,15 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - [x] ✅ Strikethrough support
 - [x] ✅ Image rendering with enhanced styling
 - [x] ✅ HTML export functionality
-- [x] ✅ Mermaid diagram support
-- [ ] 📋 Table of contents sidebar
+- [x] ✅ Mermaid diagram support with consistent styling
+- [x] ✅ Recent files list functionality
+- [x] ✅ Zoom controls with keyboard shortcuts
 - [x] 🔍 Find in page (Ctrl+F)
-- [ ] 🖨️ Print to PDF support
+- [x] ✅ DOCX export functionality
+- [x] ✅ Print to PDF support
+- [x] ✅ Modern UI design system
+- [x] ✅ Optimized window sizing
+- [ ] 📋 Table of contents sidebar
 - [ ] 🌙 Dark mode themes
 
 ## 📊 Table Support
@@ -1076,21 +1087,43 @@ Our enhanced image rendering supports both local and remote images:
 
 ## 📤 Export Functionality
 
-The **Export HTML** button (visible when viewing content) allows you to:
+The **Export dropdown** (visible when viewing content) provides multiple export options:
+
+### HTML Export
 - Generate standalone HTML files with embedded CSS
 - Preserve all formatting, syntax highlighting, and styling
 - Include images and tables in the exported document
 - Create files that work offline without external dependencies
 
-Simply click "Export HTML" in the toolbar and choose where to save your file!
+### DOCX Export
+- Export as Microsoft Word document (.docx)
+- Maintain document structure with headings, lists, and formatting
+- Preserve text styling (bold, italic, code blocks)
+- Compatible with Microsoft Word and other office suites
+
+### Print to PDF
+- Print documents directly to PDF format
+- Optimized layout with proper page breaks
+- Clean formatting without UI elements
+- Perfect for sharing and archiving
+
+Simply click the "Export" dropdown in the toolbar and choose your preferred format!
 
 ## 🚀 How to Use All Features
 
 ### File Operations
 1. **Open files**: Drag & drop .md files into the window
 2. **File associations**: Double-click .md files in your file manager
-3. **Auto-reload**: Edit files in your editor and see changes instantly
-4. **Export**: Click "Export HTML" to save as standalone HTML file
+3. **Recent files**: Click the dropdown arrow next to "Open File" for quick access
+4. **Auto-reload**: Edit files in your editor and see changes instantly
+5. **Export**: Use the Export dropdown for HTML, DOCX, or PDF formats
+
+### Zoom and View Controls
+- **Zoom in**: Press \`Ctrl++\` or click the + button
+- **Zoom out**: Press \`Ctrl+-\` or click the - button  
+- **Reset zoom**: Press \`Ctrl+0\` or click the home button
+- **Zoom range**: 50% to 200% with 10% increments
+- **Per-file memory**: Zoom level is remembered for each opened file
 
 ### Find in Page
 - **Open search**: Press \`Ctrl+F\` to open the search dialog
@@ -1174,10 +1207,16 @@ gantt
     Image Support      :done, images, after tables, 3d
     Footnotes         :done, footnotes, after images, 2d
     section Advanced Features
-    Mermaid Diagrams   :active, mermaid, after footnotes, 4d
+    Mermaid Diagrams   :done, mermaid, after footnotes, 4d
     HTML Export        :done, export, after mermaid, 3d
     Find in Page       :done, search, after export, 5d
-    Print to PDF       :pdf, after search, 4d
+    Recent Files List  :done, recent, after search, 3d
+    section Export & UI
+    DOCX Export        :done, docx, after recent, 4d
+    Print to PDF       :done, pdf, after docx, 3d
+    Zoom Controls      :done, zoom, after pdf, 3d
+    Modern UI Design   :done, ui, after zoom, 4d
+    Window Optimization :done, window, after ui, 2d
 \`\`\`
 
 ---
