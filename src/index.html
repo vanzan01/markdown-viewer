@@ -5,14 +5,24 @@
     <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Markdown Viewer</title>
-    <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    <script src="https://unpkg.com/dompurify@3.2.6/dist/purify.min.js"></script>
-    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
-    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js" 
+            integrity="sha384-+NGfjU8KzpDLXRHduEqW+ZiJr2rIg+cidUVk7B51R5xK7cHwMKQfrdFwGdrq1Bcz" 
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/dompurify@3.2.6/dist/purify.min.js" 
+            integrity="sha384-JEyTNhjM6R1ElGoJns4U2Ln4ofPcqzSsynQkmEc/KGy6336qAZl70tDLufbkla+3" 
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js" 
+            integrity="sha384-zjTqOObJTD6OT6CUn8mSpDY+crIiP0cX457OjcZosSATiUFbmdXa9KRScjfLVxFH" 
+            crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js" crossorigin="anonymous"></script>
     <!-- Highlight.js for syntax highlighting -->
-    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github.min.css" id="highlight-theme-light">
-    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" id="highlight-theme-dark" disabled>
-    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github.min.css" 
+          id="highlight-theme-light" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css" 
+          id="highlight-theme-dark" disabled crossorigin="anonymous">
+    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js" 
+            integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp" 
+            crossorigin="anonymous"></script>
     <script>
       // DOCX generation using the docx.js library
       window.generateDocxFromMarkdown = async function(markdownText, title) {

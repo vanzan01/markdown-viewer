@@ -53,11 +53,11 @@ function sanitizeHTML(html) {
       FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit']
     });
   } else {
-    console.warn('DOMPurify not available, using basic sanitization');
-    // Basic fallback sanitization
-    return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-               .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-               .replace(/javascript:/gi, '');
+    console.warn('DOMPurify not available, using safe fallback');
+    // Safe fallback - escape all HTML to prevent any XSS
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
   }
 }
 
@@ -566,15 +566,42 @@ function updateRecentFilesUI() {
     return;
   }
   
-  listContainer.innerHTML = recentFiles.map(file => `
-    <div class="recent-file-item" data-path="${encodeURIComponent(file.path)}">
-      <div class="recent-file-content">
-        <div class="recent-file-name" title="${file.path}">${file.name}</div>
-        <div class="recent-file-path">${file.path}</div>
-      </div>
-      <button class="recent-file-remove" title="Remove from list">×</button>
-    </div>
-  `).join('');
+  // Clear previous content
+  listContainer.innerHTML = '';
+  
+  // Create recent file items safely
+  recentFiles.forEach(file => {
+    // Sanitize file data
+    const sanitizedPath = DOMPurify ? DOMPurify.sanitize(file.path) : file.path;
+    const sanitizedName = DOMPurify ? DOMPurify.sanitize(file.name) : file.name;
+    
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'recent-file-item';
+    itemDiv.dataset.path = encodeURIComponent(sanitizedPath);
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'recent-file-content';
+    
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'recent-file-name';
+    nameDiv.title = sanitizedPath;
+    nameDiv.textContent = sanitizedName;
+    
+    const pathDiv = document.createElement('div');
+    pathDiv.className = 'recent-file-path';
+    pathDiv.textContent = sanitizedPath;
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'recent-file-remove';
+    removeBtn.title = 'Remove from list';
+    removeBtn.textContent = '×';
+    
+    contentDiv.appendChild(nameDiv);
+    contentDiv.appendChild(pathDiv);
+    itemDiv.appendChild(contentDiv);
+    itemDiv.appendChild(removeBtn);
+    listContainer.appendChild(itemDiv);
+  });
   
   // Add click handlers
   listContainer.querySelectorAll('.recent-file-item').forEach(item => {
@@ -1443,15 +1470,47 @@ async function processMermaidDiagrams() {
         errorDiv.style.margin = '1rem 0';
         errorDiv.style.background = '#f8f9fa';
         errorDiv.style.color = '#dc3545';
-        errorDiv.innerHTML = `
-          <div style="font-weight: bold;">📊 Mermaid Diagram Error</div>
-          <div style="font-size: 0.875rem; margin-top: 0.5rem;">Failed to render diagram</div>
-          <div style="font-size: 0.75rem; margin-top: 0.25rem; color: #6c757d;">${error.message}</div>
-          <details style="margin-top: 0.5rem;">
-            <summary style="cursor: pointer;">Show diagram source</summary>
-            <pre style="background: #fff; padding: 0.5rem; margin-top: 0.5rem; border-radius: 0.25rem; overflow-x: auto;"><code>${diagramText}</code></pre>
-          </details>
-        `;
+        // Create error content safely without innerHTML
+        const titleDiv = document.createElement('div');
+        titleDiv.style.fontWeight = 'bold';
+        titleDiv.textContent = '📊 Mermaid Diagram Error';
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.style.fontSize = '0.875rem';
+        messageDiv.style.marginTop = '0.5rem';
+        messageDiv.textContent = 'Failed to render diagram';
+        
+        const errorMessageDiv = document.createElement('div');
+        errorMessageDiv.style.fontSize = '0.75rem';
+        errorMessageDiv.style.marginTop = '0.25rem';
+        errorMessageDiv.style.color = '#6c757d';
+        errorMessageDiv.textContent = error.message || 'Unknown error';
+        
+        const details = document.createElement('details');
+        details.style.marginTop = '0.5rem';
+        
+        const summary = document.createElement('summary');
+        summary.style.cursor = 'pointer';
+        summary.textContent = 'Show diagram source';
+        
+        const pre = document.createElement('pre');
+        pre.style.background = '#fff';
+        pre.style.padding = '0.5rem';
+        pre.style.marginTop = '0.5rem';
+        pre.style.borderRadius = '0.25rem';
+        pre.style.overflowX = 'auto';
+        
+        const code = document.createElement('code');
+        code.textContent = diagramText;
+        
+        pre.appendChild(code);
+        details.appendChild(summary);
+        details.appendChild(pre);
+        
+        errorDiv.appendChild(titleDiv);
+        errorDiv.appendChild(messageDiv);
+        errorDiv.appendChild(errorMessageDiv);
+        errorDiv.appendChild(details);
         
         const preElement = block.closest('pre') || block;
         preElement.parentNode.replaceChild(errorDiv, preElement);
@@ -1521,11 +1580,24 @@ function setupImageErrorHandling() {
       fallback.style.borderRadius = '0.5rem';
       fallback.style.background = '#f8f9fa';
       fallback.style.color = '#dc3545';
-      fallback.innerHTML = `
-        <div>📷 Image failed to load</div>
-        <div style="font-size: 0.875rem; margin-top: 0.5rem;">${img.alt || 'No description'}</div>
-        <div style="font-size: 0.75rem; margin-top: 0.25rem; color: #6c757d;">${img.src}</div>
-      `;
+      // Create error content safely without innerHTML
+      const titleDiv = document.createElement('div');
+      titleDiv.textContent = '📷 Image failed to load';
+      
+      const altDiv = document.createElement('div');
+      altDiv.style.fontSize = '0.875rem';
+      altDiv.style.marginTop = '0.5rem';
+      altDiv.textContent = img.alt || 'No description';
+      
+      const srcDiv = document.createElement('div');
+      srcDiv.style.fontSize = '0.75rem';
+      srcDiv.style.marginTop = '0.25rem';
+      srcDiv.style.color = '#6c757d';
+      srcDiv.textContent = img.src;
+      
+      fallback.appendChild(titleDiv);
+      fallback.appendChild(altDiv);
+      fallback.appendChild(srcDiv);
       
       // Replace the image with the fallback
       img.parentNode.replaceChild(fallback, img);

@@ -10,8 +10,41 @@ use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use regex;
 
+// Security constants
+const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB limit
+const MAX_REGEX_SIZE: usize = 10 * 1024 * 1024; // 10MB regex limit
+const MAX_LANGUAGE_LENGTH: usize = 50; // Limit language identifier length
+
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
+
+// Secure file reading with size limits
+fn read_file_with_size_limit(path: &Path) -> Result<String, String> {
+    let metadata = path.metadata()
+        .map_err(|e| format!("Cannot read file metadata: {}", e))?;
+    
+    if metadata.len() > MAX_FILE_SIZE {
+        return Err(format!(
+            "File too large: {:.1} MB (maximum allowed: {:.1} MB)",
+            metadata.len() as f64 / 1024.0 / 1024.0,
+            MAX_FILE_SIZE as f64 / 1024.0 / 1024.0
+        ));
+    }
+    
+    fs::read_to_string(path)
+        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+// Create secure regex with size limits
+fn create_secure_regex(pattern: &str) -> Result<regex::Regex, String> {
+    use regex::RegexBuilder;
+    
+    RegexBuilder::new(pattern)
+        .size_limit(MAX_REGEX_SIZE)
+        .dfa_size_limit(MAX_REGEX_SIZE / 2)
+        .build()
+        .map_err(|e| format!("Failed to create regex: {}", e))
+}
 
 // Security validation functions
 fn validate_file_path(file_path: &str) -> Result<PathBuf, String> {
@@ -147,7 +180,7 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn parse_markdown(markdown_content: &str) -> String {
+fn parse_markdown(markdown_content: &str) -> Result<String, String> {
     // Sanitize content first
     let sanitized_content = sanitize_markdown_content(markdown_content);
     
@@ -162,10 +195,11 @@ fn parse_markdown(markdown_content: &str) -> String {
     html::push_html(&mut html_output, parser);
     
     // Post-process HTML to add syntax highlighting
-    post_process_syntax_highlighting(&html_output)
+    let html_with_syntax = post_process_syntax_highlighting(&html_output)?;
+    Ok(html_with_syntax)
 }
 
-fn post_process_syntax_highlighting(html: &str) -> String {
+fn post_process_syntax_highlighting(html: &str) -> Result<String, String> {
     // Initialize syntax highlighting resources
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let theme_set = ThemeSet::load_defaults();
@@ -176,8 +210,9 @@ fn post_process_syntax_highlighting(html: &str) -> String {
         .or_else(|| theme_set.themes.get("base16-ocean.light"))
         .unwrap_or(&theme_set.themes["base16-ocean.dark"]);
     
-    // Pattern to match fenced code blocks with language (non-greedy match)
-    let re_with_lang = regex::Regex::new(r#"<pre><code class="language-([^"]+)">(.*?)</code></pre>"#).unwrap();
+    // Pattern to match fenced code blocks with language - secured against ReDoS
+    let re_with_lang = create_secure_regex(r#"<pre><code class="language-([^"]{1,50})">(.*?)</code></pre>"#)
+        .map_err(|e| format!("Failed to create syntax highlighting regex: {}", e))?;
     
     // Process code blocks with language specification
     let result = re_with_lang.replace_all(html, |caps: &regex::Captures| {
@@ -220,7 +255,7 @@ fn post_process_syntax_highlighting(html: &str) -> String {
                language, html_escape::encode_text(&code))
     });
     
-    result.to_string()
+    Ok(result.to_string())
 }
 
 #[tauri::command]
@@ -228,40 +263,28 @@ fn read_markdown_file(file_path: String) -> Result<String, String> {
     // Validate file path for security
     let validated_path = validate_file_path(&file_path)?;
     
-    match fs::read_to_string(&validated_path) {
-        Ok(content) => {
-            // Sanitize content
-            let sanitized_content = sanitize_markdown_content(&content);
-            let html = parse_markdown_with_base_path(&sanitized_content, &validated_path.to_string_lossy());
-            Ok(html)
-        },
-        Err(e) => Err(format!("Failed to read file: {}", e))
-    }
+    // Use secure file reading with size limits
+    let content = read_file_with_size_limit(&validated_path)?;
+    
+    // Sanitize content
+    let sanitized_content = sanitize_markdown_content(&content);
+    
+    // Parse markdown
+    let html = parse_markdown(&sanitized_content)?;
+    
+    // Process images with file path context
+    post_process_image_paths(&html, &validated_path.to_string_lossy())
 }
 
-fn parse_markdown_with_base_path(markdown_content: &str, file_path: &str) -> String {
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_STRIKETHROUGH);
-    options.insert(Options::ENABLE_TABLES);
-    options.insert(Options::ENABLE_FOOTNOTES);
-    options.insert(Options::ENABLE_TASKLISTS);
-    
-    let parser = Parser::new_ext(markdown_content, options);
-    let mut html_output = String::new();
-    html::push_html(&mut html_output, parser);
-    
-    // Post-process HTML to add syntax highlighting and resolve image paths
-    let html_with_syntax = post_process_syntax_highlighting(&html_output);
-    post_process_image_paths(&html_with_syntax, file_path)
-}
 
-fn post_process_image_paths(html: &str, file_path: &str) -> String {
+fn post_process_image_paths(html: &str, file_path: &str) -> Result<String, String> {
     let base_path = Path::new(file_path).parent().unwrap_or(Path::new("."));
     
-    // Pattern to match image tags with relative paths
-    let re_img = regex::Regex::new(r#"<img src="([^"]+)"#).unwrap();
+    // Pattern to match image tags with relative paths - secured against ReDoS
+    let re_img = create_secure_regex(r#"<img src="([^"]{1,2048})"#)
+        .map_err(|e| format!("Failed to create image processing regex: {}", e))?;
     
-    re_img.replace_all(html, |caps: &regex::Captures| {
+    let result = re_img.replace_all(html, |caps: &regex::Captures| {
         let src = &caps[1];
         
         // Validate URL for security
@@ -295,7 +318,9 @@ fn post_process_image_paths(html: &str, file_path: &str) -> String {
             // Keep original if file doesn't exist (might be intentional)
             caps[0].to_string()
         }
-    }).to_string()
+    }).to_string();
+    
+    Ok(result)
 }
 
 #[tauri::command]
@@ -528,13 +553,11 @@ fn read_file_content(file_path: String) -> Result<String, String> {
     // Validate file path for security
     let validated_path = validate_file_path(&file_path)?;
     
-    match fs::read_to_string(&validated_path) {
-        Ok(content) => {
-            // Return raw content without processing for DOCX export
-            Ok(content)
-        },
-        Err(e) => Err(format!("Failed to read file: {}", e))
-    }
+    // Use secure file reading with size limits
+    let content = read_file_with_size_limit(&validated_path)?;
+    
+    // Return raw content without processing for DOCX export
+    Ok(content)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
