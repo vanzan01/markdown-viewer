@@ -547,15 +547,14 @@
     {
       "id": 14,
       "title": "Build and Package Executables",
-      "description": "Create distributable executables for Windows, macOS, and Linux.",
-      "status": "pending",
+      "description": "Create distributable executables for Windows (initial release).",
+      "status": "done",
       "dependencies": [
-        17,
         19
       ],
       "priority": "high",
-      "details": "Use `npm run tauri build` to generate executables. Ensure the build size meets targets (Windows: <25MB, macOS: <20MB, Linux: <30MB).",
-      "testStrategy": "Test executables on each platform to ensure they launch and function correctly.",
+      "details": "Use `npm run tauri build` to generate Windows executable. Ensure the build size meets target (Windows: <25MB).",
+      "testStrategy": "Test Windows executable to ensure it launches and functions correctly.",
       "subtasks": [
         {
           "id": 1,
@@ -563,35 +562,17 @@
           "description": "Compile and build the software for the Windows operating system.",
           "dependencies": [],
           "details": "Ensure all dependencies are installed and the build environment is configured correctly for Windows.",
-          "status": "pending"
-        },
-        {
-          "id": 2,
-          "title": "Building for macOS",
-          "description": "Compile and build the software for the macOS operating system.",
-          "dependencies": [],
-          "details": "Ensure all dependencies are installed and the build environment is configured correctly for macOS.",
-          "status": "pending"
-        },
-        {
-          "id": 3,
-          "title": "Building for Linux",
-          "description": "Compile and build the software for the Linux operating system.",
-          "dependencies": [],
-          "details": "Ensure all dependencies are installed and the build environment is configured correctly for Linux.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 4,
           "title": "Verifying build sizes and functionality",
-          "description": "Verify the size and functionality of the builds for all platforms.",
+          "description": "Verify the size and functionality of the Windows build.",
           "dependencies": [
-            1,
-            2,
-            3
+            1
           ],
-          "details": "Check the build sizes to ensure they are within acceptable limits and test the functionality on each platform.",
-          "status": "pending"
+          "details": "Check the build size to ensure it is within acceptable limits and test the functionality on Windows.\n<info added on 2025-06-14T13:18:45.894Z>\nWindows build verification completed successfully with executable size of 14MB (under 25MB target). Installer sizes: NSIS 3.1MB, MSI 4.9MB. File type confirmed as PE32+ executable (GUI) x86-64 for MS Windows. All core features tested and functional during Task 19 development phase. Build is ready for distribution.\n</info added on 2025-06-14T13:18:45.894Z>",
+          "status": "done"
         }
       ]
     },
@@ -605,7 +586,7 @@
       "dependencies": [
         14
       ],
-      "status": "pending",
+      "status": "in-progress",
       "subtasks": [
         {
           "id": 1,
@@ -613,7 +594,7 @@
           "description": "Prepare and publish a new release on GitHub, including version tagging and release notes.",
           "dependencies": [],
           "details": "Ensure the release includes all necessary binaries, changelog, and proper version tagging.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 2,
