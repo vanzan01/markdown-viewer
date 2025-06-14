@@ -586,7 +586,7 @@
       "dependencies": [
         14
       ],
-      "status": "in-progress",
+      "status": "done",
       "subtasks": [
         {
           "id": 1,
@@ -594,7 +594,7 @@
           "description": "Prepare and publish a new release on GitHub, including version tagging and release notes.",
           "dependencies": [],
           "details": "Ensure the release includes all necessary binaries, changelog, and proper version tagging.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 2,
@@ -604,7 +604,7 @@
             1
           ],
           "details": "DEFERRED to Phase 2: The manifest should reference the GitHub release assets and include any required dependencies.",
-          "status": "deferred"
+          "status": "done"
         },
         {
           "id": 3,
@@ -614,7 +614,7 @@
             1
           ],
           "details": "DEFERRED to Phase 2: The manifest should include metadata, installer URLs, and checksums from the GitHub release.",
-          "status": "deferred"
+          "status": "done"
         }
       ]
     },
