@@ -49,6 +49,37 @@ A fast, simple markdown file viewer for Windows. Double-click any `.md` file and
 - **Students** - Read course materials and notes
 - **Teams** - Share formatted documents without complexity
 
+## 🛠️ Build from Source
+
+Prefer to build from source? Here's how:
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [Rust](https://rustlang.org/) (latest stable)
+
+### Build Steps
+```bash
+# 1. Clone the repository
+git clone https://github.com/vanzan01/markdown-viewer.git
+cd markdown-viewer
+
+# 2. Install JavaScript dependencies
+npm install
+
+# 3. Build the application
+npm run tauri build
+```
+
+Your built executable will be in:
+- **Windows**: `src-tauri/target/release/markdown-viewer.exe`
+- **Installers**: `src-tauri/target/release/bundle/`
+
+### Development Mode
+To run in development mode with hot reload:
+```bash
+npm run tauri dev
+```
+
 ## 🔧 Built With
 
 - **Tauri + Rust** - Fast, secure desktop application
