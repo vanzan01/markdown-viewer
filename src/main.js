@@ -1556,7 +1556,15 @@ function initializeMermaid() {
         wrap: true
       },
       gantt: {
-        useMaxWidth: true
+        useMaxWidth: true,
+        fontSize: 12,
+        sectionFontSize: 13,
+        barHeight: 24,
+        barGap: 6,
+        leftPadding: 100,
+        rightPadding: 100,
+        topPadding: 50,
+        titleTopMargin: 25
       }
     });
     mermaidInitialized = true;

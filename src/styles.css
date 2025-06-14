@@ -661,6 +661,21 @@
     background: #2d3748;
     border-color: #4a5568;
   }
+  
+  /* Dark mode gantt chart label styling */
+  .mermaid-diagram-container .taskText,
+  .mermaid-diagram-container .taskTextOutsideRight,
+  .mermaid-diagram-container .taskTextOutsideLeft {
+    fill: #e5e7eb !important;
+  }
+  
+  .mermaid-diagram-container .taskText {
+    fill: white !important;
+  }
+  
+  .mermaid-diagram-container .sectionTitle {
+    fill: #f9fafb !important;
+  }
 }
 
 /* Mermaid diagram styles */
@@ -691,6 +706,42 @@
 .mermaid-diagram-container text {
   font-family: inherit !important;
   font-size: 14px !important;
+}
+
+/* Standardize Mermaid gantt chart label positioning for consistency */
+.mermaid-diagram-container .taskText,
+.mermaid-diagram-container .taskTextOutsideRight,
+.mermaid-diagram-container .taskTextOutsideLeft {
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  fill: #374151 !important;
+}
+
+/* Force consistent positioning - prefer outside right for better readability */
+.mermaid-diagram-container .taskTextOutsideRight {
+  text-anchor: start !important;
+  fill: #374151 !important;
+}
+
+.mermaid-diagram-container .taskTextOutsideLeft {
+  text-anchor: start !important;
+  fill: #374151 !important;
+}
+
+/* Inside labels with better contrast */
+.mermaid-diagram-container .taskText {
+  text-anchor: middle !important;
+  fill: white !important;
+  font-weight: 600 !important;
+}
+
+/* Improve gantt chart section labels */
+.mermaid-diagram-container .sectionTitle {
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  fill: #1f2937 !important;
 }
 
 /* Mermaid error styling */
