@@ -731,15 +731,13 @@ This comprehensive sample demonstrates **all implemented features** of our markd
 - ✅ **Footnotes** - Reference-style footnotes
 - ✅ **Task Lists** - Interactive checkboxes
 - ✅ **Image Rendering** - Local and remote images with enhanced styling
-- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts with consistent styling
+- ✅ **Mermaid Diagrams** - Flowcharts, sequence diagrams, gantt charts
 - ✅ **Recent Files List** - Quick access to recently opened markdown files
 - ✅ **Zoom Controls** - Zoom in/out with mouse or keyboard shortcuts (Ctrl +/-)
 - ✅ **Find in Page** - Search text with Ctrl+F, highlighting and navigation
 - ✅ **HTML Export** - Export current document as standalone HTML
 - ✅ **DOCX Export** - Export as Word document with full formatting
 - ✅ **Print to PDF** - Print documents to PDF with optimized layout
-- ✅ **Modern UI Design** - Contemporary button system and responsive interface
-- ✅ **Optimized Window Sizing** - Better default dimensions for content viewing
 - 🔄 *More features in development...*
 
 ## 🎨 Text Formatting
