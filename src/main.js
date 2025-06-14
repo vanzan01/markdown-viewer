@@ -817,249 +817,35 @@ Our table rendering follows GitHub markdown styling:
 | Left text    | Center text    | Right text    |
 | More left    | More center    | More right    |
 
-## 💻 Syntax Highlighting Examples
+## 💻 Syntax Highlighting
 
 Our syntax highlighting supports 20+ programming languages with color-coded themes that automatically adapt to light/dark mode:
 
-### JavaScript/TypeScript
+### Quick Examples
 \`\`\`javascript
-// Modern JavaScript with ES6+ features
-class MarkdownViewer {
-    constructor(container) {
-        this.container = container;
-        this.watchers = new Map();
-    }
-    
-    async loadFile(filePath) {
-        const content = await invoke('read_markdown_file', { filePath });
-        this.render(content);
-        this.watchFile(filePath);
-    }
-    
-    watchFile(filePath) {
-        // Auto-reload implementation
-        console.log(\`Watching: \${filePath}\`);
-    }
-}
-
-// Arrow functions and destructuring
+// JavaScript with colorized keywords, strings, and comments
 const viewer = new MarkdownViewer('#content');
-const { loadFile, watchFile } = viewer;
+viewer.loadFile('sample.md'); // String in green, comments in gray
 \`\`\`
 
-### Python
 \`\`\`python
-# Python with type hints and modern features
-from typing import List, Dict, Optional
-from pathlib import Path
-import asyncio
-
-class DocumentProcessor:
-    def __init__(self, base_path: Path):
-        self.base_path = base_path
-        self.cache: Dict[str, str] = {}
-    
-    async def process_markdown(self, file_path: str) -> Optional[str]:
-        """Process markdown file with syntax highlighting."""
-        try:
-            content = await self.read_file(file_path)
-            return self.highlight_syntax(content)
-        except FileNotFoundError:
-            print(f"File not found: {file_path}")
-            return None
-    
-    def highlight_syntax(self, content: str) -> str:
-        # Syntax highlighting logic
-        return f"<highlighted>{content}</highlighted>"
-
-# Example usage
-processor = DocumentProcessor(Path("./docs"))
-result = asyncio.run(processor.process_markdown("README.md"))
+# Python with highlighted syntax
+def process_markdown(file_path: str) -> str:
+    """Process markdown with syntax highlighting."""
+    return highlight_syntax(content)  # Function calls in blue
 \`\`\`
 
-### Rust (Our Backend Language)
 \`\`\`rust
-// Rust code demonstrating Tauri backend
-use tauri::{AppHandle, Emitter};
-use notify::{Watcher, RecommendedWatcher, RecursiveMode};
-use std::sync::{Arc, Mutex};
-
-type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
-
+// Rust backend code with proper highlighting
 #[tauri::command]
 async fn parse_markdown(content: &str) -> Result<String, String> {
-    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
-    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-    
-    // Parse markdown with syntax highlighting
-    let parser = pulldown_cmark::Parser::new_ext(content, options);
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-    
-    Ok(post_process_syntax_highlighting(&html_output))
-}
-
-#[tauri::command]
-fn start_watching_file(
-    file_path: String,
-    app_handle: AppHandle,
-    watcher_state: tauri::State<WatcherState>,
-) -> Result<(), String> {
-    // File watching implementation with notify crate
-    println!("Starting to watch: {}", file_path);
-    Ok(())
+    Ok(process_content(content))  // Keywords in purple
 }
 \`\`\`
 
-### HTML/CSS
-\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Viewer</title>
-    <style>
-        /* GitHub-style markdown CSS */
-        .markdown-body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial;
-            line-height: 1.6;
-            color: #24292e;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .syntax-highlight {
-            background: #f6f8fa;
-            border-radius: 6px;
-            padding: 16px;
-            overflow-x: auto;
-        }
-        
-        table {
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-        
-        td, th {
-            border: 1px solid #d0d7de;
-            padding: 6px 13px;
-        }
-    </style>
-</head>
-<body class="markdown-body">
-    <div id="content"></div>
-</body>
-</html>
-\`\`\`
+**Supported Languages**: JavaScript, TypeScript, Python, Rust, HTML, CSS, SQL, JSON, Bash, YAML, C/C++, Java, Go, PHP, Ruby, Swift, Kotlin, and more!
 
-### SQL
-\`\`\`sql
--- Complex SQL query with CTEs and window functions
-WITH monthly_sales AS (
-    SELECT 
-        DATE_TRUNC('month', order_date) as month,
-        customer_id,
-        SUM(amount) as monthly_total,
-        COUNT(*) as order_count
-    FROM orders 
-    WHERE order_date >= '2024-01-01'
-    GROUP BY 1, 2
-),
-customer_rankings AS (
-    SELECT 
-        customer_id,
-        month,
-        monthly_total,
-        ROW_NUMBER() OVER (PARTITION BY month ORDER BY monthly_total DESC) as rank,
-        LAG(monthly_total) OVER (PARTITION BY customer_id ORDER BY month) as prev_month
-    FROM monthly_sales
-)
-SELECT 
-    c.customer_name,
-    cr.month,
-    cr.monthly_total,
-    cr.rank,
-    CASE 
-        WHEN cr.prev_month IS NULL THEN 'New Customer'
-        WHEN cr.monthly_total > cr.prev_month THEN 'Growing'
-        ELSE 'Declining'
-    END as trend
-FROM customer_rankings cr
-JOIN customers c ON cr.customer_id = c.id
-WHERE cr.rank <= 10
-ORDER BY cr.month, cr.rank;
-\`\`\`
-
-### JSON Configuration
-\`\`\`json
-{
-  "name": "markdown-viewer",
-  "version": "0.1.0",
-  "description": "A Tauri-based markdown viewer with syntax highlighting",
-  "dependencies": {
-    "pulldown-cmark": "0.9",
-    "syntect": "5.0",
-    "notify": "6.0",
-    "tauri": "2.0"
-  },
-  "features": {
-    "syntax_highlighting": true,
-    "file_watching": true,
-    "drag_drop": true,
-    "file_associations": true,
-    "tables": true,
-    "footnotes": true,
-    "strikethrough": true
-  },
-  "supported_languages": [
-    "javascript", "typescript", "python", "rust", "html", "css", 
-    "sql", "json", "yaml", "bash", "markdown", "c", "cpp", "java",
-    "go", "php", "ruby", "swift", "kotlin", "scala", "haskell"
-  ]
-}
-\`\`\`
-
-### Shell/Bash
-\`\`\`bash
-#!/bin/bash
-# Build script for Markdown Viewer
-
-set -e  # Exit on any error
-
-echo "🚀 Building Markdown Viewer..."
-
-# Check if Rust is installed
-if ! command -v cargo &> /dev/null; then
-    echo "❌ Rust is not installed. Please install Rust first."
-    exit 1
-fi
-
-# Check if Node.js is installed  
-if ! command -v npm &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js first."
-    exit 1
-fi
-
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm install
-
-# Build the application
-echo "🔨 Building application..."
-npm run tauri build
-
-echo "✅ Build complete! Check the 'src-tauri/target/release/bundle' directory."
-
-# Optional: Create distribution package
-if [ "$1" = "--package" ]; then
-    echo "📦 Creating distribution package..."
-    mkdir -p dist
-    cp -r src-tauri/target/release/bundle/* dist/
-    echo "✅ Distribution package created in 'dist/' directory."
-fi
-\`\`\`
+*For detailed code examples showcasing all languages, see the [Extended Code Examples](#extended-code-examples) section at the bottom.*
 
 ## 📝 Footnotes and References
 
@@ -1217,6 +1003,113 @@ gantt
     Zoom Controls      :done, zoom, after pdf, 3d
     Modern UI Design   :done, ui, after zoom, 4d
     Window Optimization :done, window, after ui, 2d
+\`\`\`
+
+## Extended Code Examples
+
+*This section contains detailed syntax highlighting examples for various programming languages. These examples demonstrate the full capabilities of our color-coded syntax highlighting system.*
+
+### JavaScript/TypeScript
+\`\`\`javascript
+// Modern JavaScript with ES6+ features
+class MarkdownViewer {
+    constructor(container) {
+        this.container = container;
+        this.watchers = new Map();
+    }
+    
+    async loadFile(filePath) {
+        const content = await invoke('read_markdown_file', { filePath });
+        this.render(content);
+    }
+}
+
+const viewer = new MarkdownViewer('#content');
+\`\`\`
+
+### Python
+\`\`\`python
+from typing import List, Dict, Optional
+from pathlib import Path
+
+class DocumentProcessor:
+    def __init__(self, base_path: Path):
+        self.base_path = base_path
+        self.cache: Dict[str, str] = {}
+    
+    async def process_markdown(self, file_path: str) -> Optional[str]:
+        """Process markdown file with syntax highlighting."""
+        try:
+            content = await self.read_file(file_path)
+            return self.highlight_syntax(content)
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            return None
+\`\`\`
+
+### Rust
+\`\`\`rust
+use tauri::{AppHandle, Emitter};
+use std::sync::{Arc, Mutex};
+
+#[tauri::command]
+async fn parse_markdown(content: &str) -> Result<String, String> {
+    let parser = pulldown_cmark::Parser::new_ext(content, options);
+    let mut html_output = String::new();
+    pulldown_cmark::html::push_html(&mut html_output, parser);
+    Ok(post_process_syntax_highlighting(&html_output))
+}
+\`\`\`
+
+### SQL
+\`\`\`sql
+-- Complex query with CTEs and window functions
+WITH monthly_sales AS (
+    SELECT 
+        DATE_TRUNC('month', order_date) as month,
+        customer_id,
+        SUM(amount) as monthly_total
+    FROM orders 
+    WHERE order_date >= '2024-01-01'
+    GROUP BY 1, 2
+)
+SELECT 
+    c.customer_name,
+    cr.monthly_total,
+    ROW_NUMBER() OVER (ORDER BY monthly_total DESC) as rank
+FROM monthly_sales cr
+JOIN customers c ON cr.customer_id = c.id;
+\`\`\`
+
+### JSON
+\`\`\`json
+{
+  "name": "markdown-viewer",
+  "version": "0.1.0",
+  "features": {
+    "syntax_highlighting": true,
+    "file_watching": true,
+    "mermaid_diagrams": true
+  },
+  "supported_languages": ["javascript", "python", "rust", "sql", "json"]
+}
+\`\`\`
+
+### Bash
+\`\`\`bash
+#!/bin/bash
+set -e
+
+echo "🚀 Building Markdown Viewer..."
+
+if ! command -v cargo &> /dev/null; then
+    echo "❌ Rust is not installed."
+    exit 1
+fi
+
+npm install
+npm run tauri build
+echo "✅ Build complete!"
 \`\`\`
 
 ---
