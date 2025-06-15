@@ -36,6 +36,7 @@ test-*
 # Editor files
 .vscode/
 .idea/
+.gitmessage
 *.suo
 *.ntvs*
 *.njsproj
