@@ -63,8 +63,7 @@ fn create_secure_temp_file(content: &str) -> Result<PathBuf, String> {
         std::fs::write(&temp_file, content)
             .map_err(|_| "Failed to create temp file".to_string())?;
         
-        // Try to set permissions if possible (will silently fail on old Windows)
-        let _ = std::fs::set_permissions(&temp_file, std::fs::Permissions::from_readonly(false));
+        // Windows doesn't have from_readonly, skip permissions
     }
     
     #[cfg(not(any(unix, windows)))]
