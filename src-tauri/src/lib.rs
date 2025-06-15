@@ -13,7 +13,7 @@ use regex;
 // Security constants
 const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB limit
 const MAX_REGEX_SIZE: usize = 10 * 1024 * 1024; // 10MB regex limit
-const MAX_LANGUAGE_LENGTH: usize = 50; // Limit language identifier length
+// const MAX_LANGUAGE_LENGTH: usize = 50; // Limit language identifier length
 
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
