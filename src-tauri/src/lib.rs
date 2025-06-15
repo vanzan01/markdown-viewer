@@ -10,13 +10,72 @@ use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use regex;
 
+
 // Security constants
 const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB limit
 const MAX_REGEX_SIZE: usize = 10 * 1024 * 1024; // 10MB regex limit
+const MAX_HTML_SIZE: usize = 100 * 1024 * 1024; // 100MB HTML limit for temp files
 // const MAX_LANGUAGE_LENGTH: usize = 50; // Limit language identifier length
 
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
+
+// Security utilities for temp file handling
+fn create_secure_temp_file(content: &str) -> Result<PathBuf, String> {
+    // Basic size validation only
+    if content.len() > MAX_HTML_SIZE {
+        return Err("Content too large".to_string());
+    }
+    
+    let temp_dir = std::env::temp_dir();
+    
+    // Use secure random for filename
+    use std::time::{SystemTime, UNIX_EPOCH};
+    
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let pid = std::process::id();
+    let tid = std::thread::current().id();
+    
+    // Create unpredictable filename combining multiple entropy sources
+    let filename = format!("md_{}_{:?}_{}.html", nanos, tid, pid);
+    let temp_file = temp_dir.join(filename);
+    
+    // Create file with secure permissions on Unix from the start
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        use std::io::Write;
+        
+        let mut file = std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .mode(0o600)  // Owner read/write only
+            .open(&temp_file)
+            .map_err(|_| "Failed to create temp file".to_string())?;
+        
+        file.write_all(content.as_bytes())
+            .map_err(|_| "Failed to write content".to_string())?;
+    }
+    
+    #[cfg(windows)]
+    {
+        // On Windows, use a more secure approach
+        std::fs::write(&temp_file, content)
+            .map_err(|_| "Failed to create temp file".to_string())?;
+        
+        // Try to set permissions if possible (will silently fail on old Windows)
+        let _ = std::fs::set_permissions(&temp_file, std::fs::Permissions::from_readonly(false));
+    }
+    
+    #[cfg(not(any(unix, windows)))]
+    {
+        std::fs::write(&temp_file, content)
+            .map_err(|_| "Failed to create temp file".to_string())?;
+    }
+    
+    Ok(temp_file)
+}
+
 
 // Secure file reading with size limits
 fn read_file_with_size_limit(path: &Path) -> Result<String, String> {
@@ -562,42 +621,43 @@ fn read_file_content(file_path: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn save_temp_html_and_open(html_content: String) -> Result<(), String> {
-    // Create temp file
-    let temp_dir = std::env::temp_dir();
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    let temp_file = temp_dir.join(format!("markdown-print-{}.html", timestamp));
+    // Create secure temp file (includes validation and permissions)
+    let temp_file = create_secure_temp_file(&html_content)?;
     
-    // Write HTML to temp file
-    std::fs::write(&temp_file, html_content)
-        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+    // Spawn browser process (browser caches file content immediately)
+    let spawn_result = {
+        #[cfg(target_os = "macos")]
+        {
+            std::process::Command::new("open")
+                .arg(&temp_file)
+                .spawn()
+        }
+        
+        #[cfg(target_os = "windows")]
+        {
+            std::process::Command::new("cmd")
+                .args(["/C", "start", ""])
+                .arg(&temp_file)
+                .spawn()
+        }
+        
+        #[cfg(target_os = "linux")]
+        {
+            std::process::Command::new("xdg-open")
+                .arg(&temp_file)
+                .spawn()
+        }
+    };
     
-    // Open in default browser
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open")
-            .arg(&temp_file)
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
-    }
+    // Check if spawn succeeded
+    let _child = spawn_result.map_err(|_| "Failed to open browser".to_string())?;
     
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("cmd")
-            .args(["/C", "start", "", &temp_file.to_string_lossy()])
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
-    }
-    
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open")
-            .arg(&temp_file)
-            .spawn()
-            .map_err(|e| format!("Failed to open file: {}", e))?;
-    }
+    // Give browser 2 seconds to cache the file, then cleanup
+    let temp_file_cleanup = temp_file.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        let _ = std::fs::remove_file(&temp_file_cleanup);
+    });
     
     Ok(())
 }

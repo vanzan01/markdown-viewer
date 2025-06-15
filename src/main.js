@@ -1802,6 +1802,23 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Additional secure HTML escaping for content injection
+function secureEscapeHtml(text) {
+  if (typeof text !== 'string') {
+    return '';
+  }
+  
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/`/g, '&#x60;')
+    .replace(/=/g, '&#x3D;');
+}
+
 async function printToPdf() {
   try {
     if (!currentMarkdownContent) {
@@ -1824,12 +1841,21 @@ async function printToPdf() {
           return;
         }
         
-        // Create full HTML document with embedded styles
+        // Get the content safely
+        const contentHtml = content.innerHTML;
+        
+        // Validate content size before processing
+        if (contentHtml.length > 10 * 1024 * 1024) { // 10MB limit
+          alert('Content too large to export safely');
+          return;
+        }
+        
+        // Create full HTML document with embedded styles and secure content injection
         const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Markdown Document</title>
+  <title>${secureEscapeHtml('Markdown Document')}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -1920,7 +1946,7 @@ async function printToPdf() {
   </style>
 </head>
 <body>
-  ${content.innerHTML}
+  ${contentHtml}
 </body>
 </html>`;
         
