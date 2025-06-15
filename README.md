@@ -1,6 +1,6 @@
 # 🎉 Markdown Viewer
 
-A professional markdown file viewer for Windows. Perfect for reading AI outputs, sharing documentation with non-technical staff, and consuming markdown content without friction.
+A professional markdown file viewer for Windows and macOS. Perfect for reading AI outputs, sharing documentation with non-technical staff, and consuming markdown content without friction.
 
 **[📥 Download v1.0.0](https://github.com/vanzan01/markdown-viewer/releases/tag/v1.0.0)** • **[💖 Support This Project](https://github.com/sponsors/vanzan01)**
 
@@ -36,19 +36,26 @@ A professional markdown file viewer for Windows. Perfect for reading AI outputs,
 
 ## 📦 Installation
 
-### 🏢 Windows MSI (Recommended)
-Perfect for business environments
+### 🪟 Windows
+
+**🏢 MSI Installer (Recommended)**
 - System-wide installation with file associations
 - Start menu integration
 
-### 🎒 Windows NSIS Setup  
-Great for personal use
+**🎒 NSIS Setup**
 - User-level installation
 - No admin rights required
 
-### 📱 Standalone Executable
-For testing or portable use
+**📱 Standalone Executable**
 - Single file, no installation needed
+
+### 🍎 macOS
+
+**📦 DMG Installer**
+- Drag & drop installation to Applications
+- File associations for .md files
+
+**⚠️ First Launch:** Right-click the app and select "Open" to bypass security warning (unsigned app)
 
 ### 🛠️ Build from Source
 For developers and security-conscious users
