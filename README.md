@@ -2,7 +2,7 @@
 
 A professional markdown file viewer for Windows and macOS. Perfect for reading AI outputs, sharing documentation with non-technical staff, and consuming markdown content without friction.
 
-**[📥 Download v1.0.0](https://github.com/vanzan01/markdown-viewer/releases/tag/v1.0.0)** • **[💖 Support This Project](https://github.com/sponsors/vanzan01)**
+**[📥 Download v1.1.0](https://github.com/vanzan01/markdown-viewer/releases/tag/v1.1.0)** • **[💖 Support This Project](https://github.com/sponsors/vanzan01)**
 
 ## ✨ Key Features
 
