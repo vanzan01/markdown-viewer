@@ -560,6 +560,48 @@ fn read_file_content(file_path: String) -> Result<String, String> {
     Ok(content)
 }
 
+#[tauri::command]
+async fn save_temp_html_and_open(html_content: String) -> Result<(), String> {
+    // Create temp file
+    let temp_dir = std::env::temp_dir();
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let temp_file = temp_dir.join(format!("markdown-print-{}.html", timestamp));
+    
+    // Write HTML to temp file
+    std::fs::write(&temp_file, html_content)
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+    
+    // Open in default browser
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&temp_file)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", "", &temp_file.to_string_lossy()])
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&temp_file)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let watcher_state: WatcherState = Arc::new(Mutex::new(None));
@@ -577,7 +619,8 @@ pub fn run() {
             start_watching_file,
             stop_watching_file,
             export_html,
-            read_file_content
+            read_file_content,
+            save_temp_html_and_open
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

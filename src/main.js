@@ -1811,6 +1811,130 @@ async function printToPdf() {
 
     console.log('Print to PDF function called');
     
+    // Check if we're on macOS where window.print() doesn't work properly
+    const isMac = navigator.platform.toUpperCase().includes('MAC') || 
+                  navigator.userAgent.toUpperCase().includes('MAC');
+    
+    if (isMac) {
+      // For macOS, export HTML and open in browser where print works properly
+      try {
+        const content = document.querySelector('.content');
+        if (!content) {
+          alert('No content found to export');
+          return;
+        }
+        
+        // Create full HTML document with embedded styles
+        const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown Document</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: white;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    
+    p { margin-bottom: 1rem; }
+    
+    ul, ol { margin-bottom: 1rem; padding-left: 2rem; }
+    li { margin-bottom: 0.25rem; }
+    
+    code {
+      background: #f5f5f5;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 0.9em;
+    }
+    
+    pre {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+    
+    pre code { background: none; padding: 0; }
+    
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    
+    th { background: #f5f5f5; font-weight: 600; }
+    
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 1rem auto;
+    }
+    
+    blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 1rem;
+      margin: 1rem 0;
+      color: #666;
+    }
+    
+    a { color: #0066cc; text-decoration: underline; }
+    
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 2rem 0;
+    }
+    
+    @media print {
+      body { padding: 0; max-width: none; }
+      h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+      pre, blockquote, table, img { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  ${content.innerHTML}
+</body>
+</html>`;
+        
+        await invoke('save_temp_html_and_open', { htmlContent: fullHtml });
+        alert('Document opened in browser. Use File → Print to save as PDF.');
+        return;
+        
+      } catch (error) {
+        console.error('Failed to open in browser:', error);
+        alert('Failed to open in browser. Using fallback print dialog.');
+        // Fall through to window.print() fallback
+      }
+    }
+    
     // Reset zoom to 100% for printing to ensure consistent layout
     const originalZoom = currentZoomLevel;
     if (currentZoomLevel !== 100) {
@@ -1999,9 +2123,9 @@ async function getOriginalMarkdownContent() {
     }
   }
   
-  // For sample content, use the stored original markdown
-  if (currentTitle === 'Sample' && window.sampleMarkdownContent) {
-    return window.sampleMarkdownContent;
+  // For sample content, use the current markdown content
+  if (currentTitle === 'Sample' && currentMarkdownContent) {
+    return currentMarkdownContent;
   }
   
   throw new Error('Could not retrieve original markdown content');
