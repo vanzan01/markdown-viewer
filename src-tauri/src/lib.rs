@@ -738,6 +738,8 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             match event {
+                // RunEvent::Opened is only available on macOS and iOS
+                #[cfg(any(target_os = "macos", target_os = "ios"))]
                 RunEvent::Opened { urls } => {
                     // Find the first markdown file in the opened URLs
                     for url in urls {
