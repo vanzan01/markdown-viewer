@@ -4,7 +4,9 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
-use tauri::{AppHandle, Emitter, Manager, RunEvent};
+use tauri::{AppHandle, Emitter, Manager};
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+use tauri::RunEvent;
 use syntect::parsing::SyntaxSet;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
@@ -736,11 +738,12 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app_handle, event| {
+        .run(|_app_handle, event| {
             match event {
                 // RunEvent::Opened is only available on macOS and iOS
                 #[cfg(any(target_os = "macos", target_os = "ios"))]
                 RunEvent::Opened { urls } => {
+                    let app_handle = _app_handle;
                     // Find the first markdown file in the opened URLs
                     for url in urls {
                         // Convert URL to string and handle file:// URLs
