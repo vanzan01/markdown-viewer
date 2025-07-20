@@ -11,6 +11,7 @@ use syntect::parsing::SyntaxSet;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
 use regex;
+use percent_encoding::percent_decode_str;
 
 
 // Security constants
@@ -127,6 +128,31 @@ fn create_secure_regex(pattern: &str) -> Result<regex::Regex, String> {
         .dfa_size_limit(MAX_REGEX_SIZE / 2)
         .build()
         .map_err(|e| format!("Failed to create regex: {}", e))
+}
+
+// Decode file:// URL using percent_encoding crate (already included via Tauri dependencies)
+// Supports UTF-8 multi-byte characters including Chinese characters
+fn decode_file_url(url_str: &str) -> String {
+    // Step 1: Decode URL-encoded string to UTF-8 using percent_encoding crate
+    // This automatically handles UTF-8 multi-byte characters (including Chinese)
+    let decoded_url = percent_decode_str(url_str)
+        .decode_utf8_lossy()
+        .to_string();
+    
+    // Step 2: Now handle file:// prefix and format on the decoded string
+    let mut path = decoded_url.trim_start_matches("file://").to_string();
+    
+    // Handle file:/// or file://localhost/ formats
+    // macOS typically uses file:///absolute/path format (three slashes)
+    if path.starts_with("//") {
+        // file:////path -> /path (remove extra slashes)
+        path = path.trim_start_matches("//").to_string();
+    } else if path.starts_with("localhost/") {
+        // file://localhost/path -> path
+        path = path.trim_start_matches("localhost/").to_string();
+    }
+    
+    path
 }
 
 // Security validation functions
@@ -746,10 +772,9 @@ pub fn run() {
                     let app_handle = _app_handle;
                     // Find the first markdown file in the opened URLs
                     for url in urls {
-                        // Convert URL to string and handle file:// URLs
                         let url_str = url.as_str();
                         let file_path = if url_str.starts_with("file://") {
-                            url_str.trim_start_matches("file://").to_string()
+                            decode_file_url(url_str)
                         } else {
                             url_str.to_string()
                         };
@@ -766,6 +791,9 @@ pub fn run() {
                                 
                                 // Also try to emit the event to the frontend if it's ready
                                 let _ = app_handle.emit("file-opened-via-os", &validated_str);
+                            } else {
+                                // Add error log for debugging
+                                eprintln!("Failed to validate file path: {}", file_path);
                             }
                             break;
                         }
