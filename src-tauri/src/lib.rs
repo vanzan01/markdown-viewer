@@ -4,7 +4,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager, RunEvent};
 use syntect::parsing::SyntaxSet;
 use syntect::highlighting::ThemeSet;
 use syntect::html::highlighted_html_for_string;
@@ -19,6 +19,29 @@ const MAX_HTML_SIZE: usize = 100 * 1024 * 1024; // 100MB HTML limit for temp fil
 
 // Global state for file watcher
 type WatcherState = Arc<Mutex<Option<RecommendedWatcher>>>;
+
+// App state to store file opened via "Open With" on macOS
+#[derive(Default)]
+struct OpenedFileState {
+    file_path: Arc<Mutex<Option<String>>>,
+}
+
+impl OpenedFileState {
+    fn set_file(&self, path: String) {
+        let mut file_path = self.file_path.lock().unwrap();
+        *file_path = Some(path);
+    }
+    
+    fn get_file(&self) -> Option<String> {
+        let file_path = self.file_path.lock().unwrap();
+        file_path.clone()
+    }
+    
+    fn clear_file(&self) {
+        let mut file_path = self.file_path.lock().unwrap();
+        *file_path = None;
+    }
+}
 
 // Security utilities for temp file handling
 fn create_secure_temp_file(content: &str) -> Result<PathBuf, String> {
@@ -387,6 +410,16 @@ fn get_launch_args() -> Vec<String> {
 }
 
 #[tauri::command]
+fn get_opened_file(state: tauri::State<OpenedFileState>) -> Option<String> {
+    let file = state.get_file();
+    if file.is_some() {
+        // Clear the file after retrieving it so it's only opened once
+        state.clear_file();
+    }
+    file
+}
+
+#[tauri::command]
 fn export_html(content: String, title: String) -> Result<String, String> {
     let html_template = format!(r#"<!DOCTYPE html>
 <html lang="en">
@@ -664,23 +697,78 @@ async fn save_temp_html_and_open(html_content: String) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let watcher_state: WatcherState = Arc::new(Mutex::new(None));
+    let opened_file_state = OpenedFileState::default();
     
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .manage(watcher_state)
+        .manage(opened_file_state)
         .invoke_handler(tauri::generate_handler![
             greet, 
             parse_markdown, 
             read_markdown_file, 
             get_launch_args,
+            get_opened_file,
             start_watching_file,
             stop_watching_file,
             export_html,
             read_file_content,
             save_temp_html_and_open
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .setup(|app| {
+            // Check command line args during setup (fallback for other platforms)
+            let setup_args = env::args().collect::<Vec<String>>();
+            
+            // Check for markdown files in args
+            for arg in setup_args.iter().skip(1) {
+                if arg.ends_with(".md") || arg.ends_with(".markdown") || 
+                   arg.ends_with(".mdown") || arg.ends_with(".mkd") {
+                    // For command line arguments, store in the opened file state
+                    let opened_file_state = app.state::<OpenedFileState>();
+                    opened_file_state.set_file(arg.clone());
+                    break;
+                }
+            }
+            
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            match event {
+                RunEvent::Opened { urls } => {
+                    // Find the first markdown file in the opened URLs
+                    for url in urls {
+                        // Convert URL to string and handle file:// URLs
+                        let url_str = url.as_str();
+                        let file_path = if url_str.starts_with("file://") {
+                            url_str.trim_start_matches("file://").to_string()
+                        } else {
+                            url_str.to_string()
+                        };
+                        
+                        if file_path.ends_with(".md") || file_path.ends_with(".markdown") || 
+                           file_path.ends_with(".mdown") || file_path.ends_with(".mkd") {
+                            // Validate the file path for security
+                            if let Ok(validated_path) = validate_file_path(&file_path) {
+                                let validated_str = validated_path.to_string_lossy().to_string();
+                                
+                                // Store the opened file in app state
+                                let opened_file_state = app_handle.state::<OpenedFileState>();
+                                opened_file_state.set_file(validated_str.clone());
+                                
+                                // Also try to emit the event to the frontend if it's ready
+                                let _ = app_handle.emit("file-opened-via-os", &validated_str);
+                            }
+                            break;
+                        }
+                    }
+                }
+                _ => {
+                    // Handle other events as needed
+                }
+            }
+        });
 }

@@ -1176,18 +1176,25 @@ async function loadMarkdownFile(filePath) {
 
 async function checkLaunchArgs() {
   try {
+    // First check if there's a file opened via "Open With" (macOS RunEvent::Opened)
+    const openedFile = await invoke('get_opened_file');
+    if (openedFile) {
+      await loadMarkdownFile(openedFile);
+      return true;
+    }
+    
+    // Fallback: check command line arguments (for other platforms or direct execution)
     const args = await invoke('get_launch_args');
-    console.log('Launch args:', args);
     
     // Look for markdown file in arguments (skip first arg which is the executable)
     for (let i = 1; i < args.length; i++) {
       const arg = args[i];
       if (arg.match(/\.(md|markdown|mdown|mkd)$/i)) {
-        console.log('Found markdown file in args:', arg);
         await loadMarkdownFile(arg);
         return true;
       }
     }
+    
     return false;
   } catch (error) {
     console.error('Error checking launch args:', error);
@@ -2158,24 +2165,6 @@ async function getOriginalMarkdownContent() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  console.log('🚀 DOM Content Loaded');
-  console.log('🔍 Checking Tauri availability...');
-  console.log('window.__TAURI__:', !!window.__TAURI__);
-  console.log('window.__TAURI__.event:', !!window.__TAURI__?.event);
-  console.log('window.__TAURI__.window:', !!window.__TAURI__?.window);
-  console.log('window.__TAURI__.webview:', !!window.__TAURI__?.webview);
-  console.log('window.__TAURI__.core:', !!window.__TAURI__?.core);
-  
-  // Debug library availability
-  console.log('🔍 Checking libraries...');
-  console.log('DOMPurify:', typeof DOMPurify !== 'undefined');
-  console.log('mermaid:', typeof mermaid !== 'undefined');
-  console.log('saveAs:', typeof saveAs !== 'undefined');
-  console.log('window.docxReady:', window.docxReady);
-  console.log('window.generateDocxFromMarkdown:', typeof window.generateDocxFromMarkdown !== 'undefined');
-  console.log('docx library:', typeof docx !== 'undefined');
-  console.log('highlight.js:', typeof hljs !== 'undefined');
-  console.log('window.highlightJsReady:', window.highlightJsReady);
   
   // Get DOM elements
   openFileBtn = document.querySelector('#open-file-btn');
@@ -2281,6 +2270,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   const { listen } = window.__TAURI__.event;
   await listen('file-changed', (event) => {
     handleFileChange(event.payload);
+  });
+  
+  // Listen for file opened via OS "Open With" events
+  await listen('file-opened-via-os', async (event) => {
+    const filePath = event.payload;
+    if (filePath) {
+      // Small delay to ensure UI is ready
+      setTimeout(async () => {
+        await loadMarkdownFile(filePath);
+      }, 100);
+    }
   });
   
   // Check for file associations (launch arguments)
