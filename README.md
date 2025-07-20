@@ -58,13 +58,32 @@ A professional markdown file viewer for Windows and macOS. Perfect for reading A
 **⚠️ First Launch:** Right-click the app and select "Open" to bypass security warning (unsigned app)
 
 ### 🛠️ Build from Source
-For developers and security-conscious users
+
+**Prerequisites:**
+- [Node.js](https://nodejs.org/) v18 or later
+- [Rust](https://www.rust-lang.org/tools/install) (latest stable version)
+- npm (comes with Node.js)
+
+**Build Steps:**
 ```bash
+# 1. Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# 2. Clone the repository
 git clone https://github.com/vanzan01/markdown-viewer.git
 cd markdown-viewer
+
+# 3. Install dependencies
 npm install
+
+# 4. Build the application
 npm run tauri build
 ```
+
+The built applications will be in:
+- **Windows**: `src-tauri/target/release/bundle/`
+- **macOS**: `src-tauri/target/release/bundle/`
 
 ## 🎯 Quick Start
 
