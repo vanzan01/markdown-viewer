@@ -115,8 +115,59 @@ fn read_file_with_size_limit(path: &Path) -> Result<String, String> {
         ));
     }
     
-    fs::read_to_string(path)
+    fs::read(path)
+        .map(decode_markdown)
         .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+fn decode_markdown(bytes: Vec<u8>) -> String {
+    let bytes = match String::from_utf8(bytes) {
+        Ok(markdown) => return markdown,
+        Err(error) => error.into_bytes(),
+    };
+
+    // Some Windows tools append Windows-1252 text to an existing UTF-8 file.
+    // Keep valid UTF-8 runs and decode only the remaining bytes as Windows-1252.
+    const WINDOWS_1252_C1: [char; 32] = [
+        '\u{20AC}', '\u{0081}', '\u{201A}', '\u{0192}', '\u{201E}', '\u{2026}', '\u{2020}', '\u{2021}',
+        '\u{02C6}', '\u{2030}', '\u{0160}', '\u{2039}', '\u{0152}', '\u{008D}', '\u{017D}', '\u{008F}',
+        '\u{0090}', '\u{2018}', '\u{2019}', '\u{201C}', '\u{201D}', '\u{2022}', '\u{2013}', '\u{2014}',
+        '\u{02DC}', '\u{2122}', '\u{0161}', '\u{203A}', '\u{0153}', '\u{009D}', '\u{017E}', '\u{0178}',
+    ];
+
+    let mut markdown = String::with_capacity(bytes.len());
+    for chunk in bytes.utf8_chunks() {
+        markdown.push_str(chunk.valid());
+        for &byte in chunk.invalid() {
+            markdown.push(match byte {
+                0x80..=0x9F => WINDOWS_1252_C1[usize::from(byte - 0x80)],
+                _ => char::from(byte),
+            });
+        }
+    }
+    markdown
+}
+
+#[cfg(test)]
+mod markdown_encoding_tests {
+    use super::decode_markdown;
+
+    #[test]
+    fn preserves_valid_utf8() {
+        let markdown = "# Журнал — 🚗";
+        assert_eq!(decode_markdown(markdown.as_bytes().to_vec()), markdown);
+    }
+
+    #[test]
+    fn decodes_windows_1252_bytes_between_utf8_runs() {
+        let mut bytes = "До ".as_bytes().to_vec();
+        bytes.extend_from_slice(b"\x97 caf\xE9\x85 ");
+        bytes.extend_from_slice("после".as_bytes());
+        assert_eq!(
+            decode_markdown(bytes),
+            "До — café… после",
+        );
+    }
 }
 
 // Create secure regex with size limits
